@@ -1,7 +1,5 @@
 var request = require('request');
 var slugify = require('slugify')
-var fs = require("fs");
-
 
 const express = require('express')
 const app = express()
@@ -11,7 +9,6 @@ const systembolagetAPIEndpoint = "https://api-extern.systembolaget.se/product/v1
 var config = require('./config');
 
 var processedProductsList = "";
-
 
 // Create and set .URL attribute in article JSON-objects
 // URL leads to the articles www.systembolaget.se/... page
@@ -151,12 +148,13 @@ function parseSystembolagetsAPI(){
    "Ocp-Apim-Subscription-Key" : config.Ocp_Apim_Subscription_Key
   };
 
-
   request({ url: systembolagetAPIEndpoint, headers: headers }, function (error, response, body) {
 
       if (!error && response.statusCode == 200) {
 
         var parsedProducts = JSON.parse(body);
+
+        var start = new Date()
         processParsedProducts(parsedProducts)
 
         var start = new Date()
@@ -164,7 +162,8 @@ function parseSystembolagetsAPI(){
           return parseFloat(b.APK) - parseFloat(a.APK);
         });
 
-        console.log("DONE\nAntal produkter: " + Object.keys(parsedProducts).length + "\n")
+        console.info('Processing + sorting time: %dms', new Date() - start)
+        console.log("Antal produkter: " + Object.keys(parsedProducts).length + "\n")
 
         processedProductsList = parsedProducts;
 
