@@ -27,7 +27,19 @@ let categoryList = {
   "Presentartiklar": new Array(),
   "Aperitif_dessert": new Array(),
   "Alkoholfritt": new Array(),
-  "Viner": new Array() // Added as extra!
+  "Viner": new Array(), // Added as extra!
+  // Filteret out standard assortment (BS)
+  "Röda_viner_": new Array(), // Added as extra! - Standard assortment
+  "Cider_och_blanddrycker": new Array(), // Added as extra! - Standard assortment
+  "Vita_viner": new Array(), // Added as extra! - Standard assortment
+  "Sprit": new Array(), // Added as extra! - Standard assortment
+  "Mousserande_viner": new Array(), // Added as extra! - Standard assortment
+  "Öl": new Array(), // Added as extra! - Standard assortment
+  "Roséviner": new Array(), // Added as extra! - Standard assortment
+  "Presentartiklar": new Array(), // Added as extra! - Standard assortment
+  "Aperitif_dessert": new Array(), // Added as extra! - Standard assortment
+  "Alkoholfritt": new Array(), // Added as extra! - Standard assortment
+  "Viner": new Array()  // Added as extra! - Standard assortment
 }
 
 // Maybe remove?
@@ -42,6 +54,14 @@ let categoryNames = {
   Presentartiklar: "Presentartiklar",
   Aperitif_dessert: "Aperitif & dessert",
   Alkoholfritt: "Alkoholfritt"
+}
+
+
+// Given ""-string gives all categories
+function getStandardAssortmentWithCategory(category){
+
+
+
 }
 
 function createCategoryLists(productList){
