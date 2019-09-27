@@ -1,22 +1,89 @@
-var request = require('request');
-var slugify = require('slugify')
+let request = require('request');
+let slugify = require('slugify')
 
 const express = require('express')
 const app = express()
 const port = 1337
 const systembolagetAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 
-var config = require('./config');
+let config = require('./config');
 
-var processedProductsList = "";
+let startedParseDate = new Date()
+
+let processedProductsList = "";
+
+// categoiesList
+// |---> "Öl" |
+// |          | ---> product
+// |          | ---> product
+let categoryList = {
+  "Röda_viner": new Array(),
+  "Cider_och_blanddrycker": new Array(),
+  "Vita_viner": new Array(),
+  "Sprit": new Array(),
+  "Mousserande_viner": new Array(),
+  "Öl": new Array(),
+  "Roséviner": new Array(),
+  "Presentartiklar": new Array(),
+  "Aperitif_dessert": new Array(),
+  "Alkoholfritt": new Array(),
+  "Viner": new Array() // Added as extra!
+}
+
+// Maybe remove?
+let categoryNames = {
+  Röda_viner: "Röda viner",
+  Cider_och_blanddrycker: "Cider och blanddrycker",
+  Vita_viner: "Vita viner",
+  Sprit: "Sprit",
+  Mousserande_viner: "Mousserande viner",
+  Öl: "Öl",
+  Roséviner: "Roséviner",
+  Presentartiklar: "Presentartiklar",
+  Aperitif_dessert: "Aperitif & dessert",
+  Alkoholfritt: "Alkoholfritt"
+}
+
+function createCategoryLists(productList){
+
+  var allWines = [];
+
+  for (var i = 0; i < productList.length; i++) {
+
+    let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll(" ","_")
+    currentCategory = currentCategory.replaceAll("&","").replaceAll("__","_")
+    currentCategory = currentCategory.replaceAll("\"","")
+
+    console.log("currentCategory --> "+ currentCategory)
+
+    if(categoryList[currentCategory] === undefined){
+      console.log("Found currentCategory=null!")
+    }else{
+      categoryList[currentCategory].push(productList[i])
+
+      if(currentCategory == "Röda_viner" || currentCategory == "Mousserande_viner" || currentCategory == "Vita_viner" || currentCategory == "Roséviner"){
+        allWines.push(productList[i])
+      }
+
+    }
+  }
+
+  allWines.sort(function(a, b) {
+    return parseFloat(b.APK) - parseFloat(a.APK);
+  });
+
+  categoryList["Viner"] = allWines;
+
+  console.log("categoryList: " + JSON.stringify(categoryList))
+}
 
 // Create and set .URL attribute in article JSON-objects
 // URL leads to the articles www.systembolaget.se/... page
 function addURLtoProduct(product){
-  var baseURL = "https:\//www.systembolaget.se/dryck";
-  var categoryURL = "";
-  var nameURL = "";
-  var numberURL = product.ProductNumber;
+  let baseURL = "https:\//www.systembolaget.se/dryck";
+  let categoryURL = "";
+  let nameURL = "";
+  let numberURL = product.ProductNumber;
 
   if(product.Category == null){
     return;
@@ -67,24 +134,24 @@ function addURLtoProduct(product){
   nameURL = slugify(nameURL);
   nameURL = nameURL.replaceAll("-and-","-")
 
-  var createdURL = baseURL+"/"+categoryURL+"/"+nameURL+"-"+numberURL;
+  let createdURL = baseURL+"/"+categoryURL+"/"+nameURL+"-"+numberURL;
   product.URL = createdURL;
   return createdURL;
 }
 
 // Add APK + URL to list of article objects
 function processParsedProducts(productList){
-  var count = 0;
+  let count = 0;
 
   // Find max APK to calculate APKScore
-  var maxAPKFound = 0;
+  let maxAPKFound = 0;
 
-  for (var i = 0; i < productList.length; i++) {
+  for (let i = 0; i < productList.length; i++) {
 
     // Removing products that is "IsCompletelyOutOfStock = true"
     if(productList[i].IsCompletelyOutOfStock){
       productList.splice(i,1);
-      console.log("Removed a IsCompletelyOutOfStock=true")
+      //console.log("Removed a IsCompletelyOutOfStock=true")
     }
 
     addURLtoProduct(productList[i])
@@ -97,18 +164,17 @@ function processParsedProducts(productList){
   }
 
   // Setting APKScore
-  for (var i = 0; i < productList.length; i++) {
+  for (let i = 0; i < productList.length; i++) {
     productList[i].APKScore = Math.ceil((productList[i].APK/maxAPKFound)*100)
   }
-
 }
 
 function addAPKtoProduct(product) {
 
-  var price = parseFloat(product.Price);
-  var volume = parseFloat(product.Volume);
-  var alcohol = parseFloat(String(product.AlcoholPercentage).replace("%",""));
-  var pant = product.RecycleFee;
+  let price = parseFloat(product.Price);
+  let volume = parseFloat(product.Volume);
+  let alcohol = parseFloat(String(product.AlcoholPercentage).replace("%",""));
+  let pant = product.RecycleFee;
 
   if(Number.isNaN(price) || Number.isNaN(volume) || Number.isNaN(alcohol)){
     console.error("---------------------")
@@ -149,27 +215,28 @@ function parseSystembolagetsAPI(){
   };
 
   request({ url: systembolagetAPIEndpoint, headers: headers }, function (error, response, body) {
+    console.info('Download time: %dms', new Date() - startedParseDate)
 
-      if (!error && response.statusCode == 200) {
+    if (!error && response.statusCode == 200) {
 
-        var parsedProducts = JSON.parse(body);
+      let parsedProducts = JSON.parse(body);
 
-        var start = new Date()
-        processParsedProducts(parsedProducts)
+      let beforeProcessAndSortDate = new Date()
+      processParsedProducts(parsedProducts)
+      parsedProducts.sort(function(a, b) {
+        return parseFloat(b.APK) - parseFloat(a.APK);
+      });
 
-        var start = new Date()
-        parsedProducts.sort(function(a, b) {
-          return parseFloat(b.APK) - parseFloat(a.APK);
-        });
+      console.info('Processing + sorting time: %dms', new Date() - beforeProcessAndSortDate)
+      console.log("Antal produkter: " + Object.keys(parsedProducts).length + "\n")
 
-        console.info('Processing + sorting time: %dms', new Date() - start)
-        console.log("Antal produkter: " + Object.keys(parsedProducts).length + "\n")
+      processedProductsList = parsedProducts;
 
-        processedProductsList = parsedProducts;
+      createCategoryLists(processedProductsList);
 
-      }else{
-        console.log("ERROR: \n" + response.statusCode + "-" + error)
-      }
+    }else{
+      console.log("ERROR: \n" + response.statusCode + "-" + error)
+    }
   })
 
 }
@@ -179,9 +246,9 @@ function openEndPoints(){
   // HTML endpoint with top 500 from ARRAY
   app.get('/dump', (req, res) => {
     res.set('Content-Type', 'text/html');
-    var listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
-    for(var i = 0; i<18000; i++){ //TODO 18000 som magic number? använd nån längd av nått
-      var prod = processedProductsList[i];
+    let listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
+    for(let i = 0; i<18000; i++){ //TODO 18000 som magic number? använd nån längd av nått
+      let prod = processedProductsList[i];
       listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.ProductNameBold +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoProduct(prod)+">"+addURLtoProduct(prod)+"</a></li>"
     }
     res.send('<div class=\"container\"><h2>TOP APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
@@ -191,23 +258,35 @@ function openEndPoints(){
     res.send("Psst, wrong endpoint!\n\nXoxo")
   })
 
-  // Return all articles from ARRAY (memory)
+  // Return all articles
   app.get('/APKappen_v1/', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
     }else{
-      var start = new Date()
+      let start = new Date()
       res.json(processedProductsList)
       console.info('Array | Response time: %dms', new Date() - start)
     }
   })
 
-  // Return top :numberOfArticles from ARRAY (memory)
+  // Return all articles with :category
+  app.get('/APKappen_v1/category/:selectedCategory', (req, res) => {
+    if(processedProductsList == undefined){
+      res.sendStatus(204)
+    }else{
+      let start = new Date()
+      let selectedCategory = req.params.selectedCategory
+      res.json(categoryList[selectedCategory])
+      console.info('Response time: %dms', new Date() - start)
+    }
+  })
+
+  // Return top :numberOfArticles
   app.get('/APKappen_v1/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
     }else{
-      var start = new Date()
+      let start = new Date()
       res.json(processedProductsList.slice(0, req.params.numberOfArticles))
       console.info('#articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
     }
