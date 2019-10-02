@@ -1,6 +1,8 @@
 let request = require('request');
+let fs = require('fs')
 let slugify = require('slugify')
-var schedule = require('node-schedule');
+let marked = require('marked')
+let schedule = require('node-schedule');
 
 const express = require('express')
 const app = express()
@@ -320,7 +322,9 @@ function openEndPoints(){
   })
 
   app.get('/', (req, res) => {
-    res.send("Psst, wrong endpoint!\n\nXoxo")
+
+    var file = fs.readFileSync('../documentation-v1.md', 'utf8');
+    res.send(marked(file.toString()));
   })
 
   // Return all articles
