@@ -1,5 +1,6 @@
 let request = require('request');
 let slugify = require('slugify')
+var schedule = require('node-schedule');
 
 const express = require('express')
 const app = express()
@@ -28,18 +29,20 @@ let categoryList = {
   "Aperitif_dessert": new Array(),
   "Alkoholfritt": new Array(),
   "Viner": new Array(), // Added as extra!
+
   // Filteret out standard assortment (BS)
-  "Röda_viner_": new Array(), // Added as extra! - Standard assortment
-  "Cider_och_blanddrycker": new Array(), // Added as extra! - Standard assortment
-  "Vita_viner": new Array(), // Added as extra! - Standard assortment
-  "Sprit": new Array(), // Added as extra! - Standard assortment
-  "Mousserande_viner": new Array(), // Added as extra! - Standard assortment
-  "Öl": new Array(), // Added as extra! - Standard assortment
-  "Roséviner": new Array(), // Added as extra! - Standard assortment
-  "Presentartiklar": new Array(), // Added as extra! - Standard assortment
-  "Aperitif_dessert": new Array(), // Added as extra! - Standard assortment
-  "Alkoholfritt": new Array(), // Added as extra! - Standard assortment
-  "Viner": new Array()  // Added as extra! - Standard assortment
+  // TODO Fill below arrays
+  "Röda_viner_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Cider_och_blanddrycker_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Vita_viner_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Sprit_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Mousserande_viner_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Öl_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Roséviner_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Presentartiklar_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Aperitif_dessert_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Alkoholfritt_standard_assortment": new Array(), // Added as extra! - Standard assortment
+  "Viner_standard_assortment": new Array()  // Added as extra! - Standard assortment
 }
 
 // Maybe remove?
@@ -58,6 +61,7 @@ let categoryNames = {
 
 
 // Given ""-string gives all categories
+// TODO
 function getStandardAssortmentWithCategory(category){
 
 
@@ -65,6 +69,8 @@ function getStandardAssortmentWithCategory(category){
 }
 
 function createCategoryLists(productList){
+
+  resetProductArrays()
 
   var allWines = [];
 
@@ -74,10 +80,8 @@ function createCategoryLists(productList){
     currentCategory = currentCategory.replaceAll("&","").replaceAll("__","_")
     currentCategory = currentCategory.replaceAll("\"","")
 
-    console.log("currentCategory --> "+ currentCategory)
-
     if(categoryList[currentCategory] === undefined){
-      console.log("Found currentCategory=null!")
+      //console.log("Found currentCategory=null!")
     }else{
       categoryList[currentCategory].push(productList[i])
 
@@ -93,8 +97,6 @@ function createCategoryLists(productList){
   });
 
   categoryList["Viner"] = allWines;
-
-  console.log("categoryList: " + JSON.stringify(categoryList))
 }
 
 // Create and set .URL attribute in article JSON-objects
@@ -227,8 +229,52 @@ String.prototype.replaceAll = function(str1, str2, ignore){
     return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
 }
 
+function resetProductArrays(){
+
+  console.log("Resetting product arrays.")
+
+  categoryList = {
+    "Röda_viner": new Array(),
+    "Cider_och_blanddrycker": new Array(),
+    "Vita_viner": new Array(),
+    "Sprit": new Array(),
+    "Mousserande_viner": new Array(),
+    "Öl": new Array(),
+    "Roséviner": new Array(),
+    "Presentartiklar": new Array(),
+    "Aperitif_dessert": new Array(),
+    "Alkoholfritt": new Array(),
+    "Viner": new Array(), // Added as extra!
+
+    // Filteret out standard assortment (BS)
+    "Röda_viner_standard_assortment": new Array(),
+    "Cider_och_blanddrycker_standard_assortment": new Array(),
+    "Vita_viner_standard_assortment": new Array(),
+    "Sprit_standard_assortment": new Array(),
+    "Mousserande_viner_standard_assortment": new Array(),
+    "Öl_standard_assortment": new Array(),
+    "Roséviner_standard_assortment": new Array(),
+    "Presentartiklar_standard_assortment": new Array(),
+    "Aperitif_dessert_standard_assortment": new Array(),
+    "Alkoholfritt_standard_assortment": new Array(),
+    "Viner_standard_assortment": new Array()
+  }
+}
+
+// Called every 24h
+function reparseSystembolagetAPI(){
+  console.log("Reparsing Systembolagets API")
+  parseSystembolagetsAPI()
+}
+
 function parseSystembolagetsAPI(){
   console.log("Parsing from systembolagets API")
+
+  // Reparsing everyday at 03:00
+  var s = schedule.scheduleJob('0 3 * * *', function(){
+    console.log("03:00 - Reparsing.")
+    reparseSystembolagetAPI()
+  });
 
   headers = {
    "Ocp-Apim-Subscription-Key" : config.Ocp_Apim_Subscription_Key
@@ -248,7 +294,7 @@ function parseSystembolagetsAPI(){
       });
 
       console.info('Processing + sorting time: %dms', new Date() - beforeProcessAndSortDate)
-      console.log("Antal produkter: " + Object.keys(parsedProducts).length + "\n")
+      console.log("Antal produkter: " + Object.keys(parsedProducts).length)
 
       processedProductsList = parsedProducts;
 
@@ -301,6 +347,18 @@ function openEndPoints(){
     }
   })
 
+  // Return all articles with :category top :numberOfArticles
+  app.get('/APKappen_v1/category/:selectedCategory/:numberOfArticles', (req, res) => {
+    if(processedProductsList == undefined){
+      res.sendStatus(204)
+    }else{
+      let start = new Date()
+      let selectedCategory = req.params.selectedCategory
+      res.json(categoryList[selectedCategory].slice(0, req.params.numberOfArticles))
+      console.info('Response time: %dms', new Date() - start)
+    }
+  })
+
   // Return top :numberOfArticles
   app.get('/APKappen_v1/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
@@ -312,17 +370,15 @@ function openEndPoints(){
     }
 
   })
-  app.listen(port, () => console.log(`Listening on port ${port}!`))
+  app.listen(port, () => console.log(`Listening on port ${port}!\n`))
 }
 
 function main(){
-  console.log("Main()")
 
   openEndPoints()
 
   parseSystembolagetsAPI()
 
-  console.log("Main() - DONE")
 }
 
 main();
