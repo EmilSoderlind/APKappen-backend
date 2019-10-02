@@ -304,7 +304,6 @@ function parseSystembolagetsAPI(){
       console.log("ERROR: \n" + response.statusCode + "-" + error)
     }
   })
-
 }
 
 function openEndPoints(){
