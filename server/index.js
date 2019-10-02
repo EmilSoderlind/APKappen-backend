@@ -323,7 +323,7 @@ function openEndPoints(){
 
   app.get('/', (req, res) => {
 
-    var file = fs.readFileSync('../documentation-v1.md', 'utf8');
+    var file = fs.readFileSync('documentation-v1.md', 'utf8');
     res.send(marked(file.toString()));
   })
 
