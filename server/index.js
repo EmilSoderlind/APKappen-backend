@@ -333,13 +333,35 @@ function openEndPoints(){
   })
 
   // Return all articles
-  app.get('/APKappen_v1/', (req, res) => {
+  app.get('/APKappen_v1', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
     }else{
-      let start = new Date()
-      res.json(processedProductsList)
-      console.info('Array | Response time: %dms', new Date() - start)
+
+
+      var pagesPerIndex = Number(req.query.pagesPerIndex);
+      var pageIndex = Number(req.query.pageIndex);
+
+
+      console.log("pagesPerIndex: " + pagesPerIndex)
+      console.log("pageIndex: " + pageIndex)
+      if(true){
+
+
+
+        var startSliceIndex = (pageIndex*pagesPerIndex);
+        var endSliceIndex = ((pageIndex*pagesPerIndex)+pagesPerIndex)-1;
+
+
+        console.log("From " + startSliceIndex + " to " + endSliceIndex)
+
+        //res.json(processedProductsList.slice(startSliceIndex,endSliceIndex))
+        res.json(processedProductsList)
+
+      }else{
+        res.json(processedProductsList)
+        return;
+      }
     }
   })
 
