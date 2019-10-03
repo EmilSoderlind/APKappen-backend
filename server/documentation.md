@@ -5,12 +5,12 @@ All returned products is sorted by APK.
 
 ## Endpoint: /APKappen_v1
 ### Query options
-Several filters
+Several query parameters can be used simultaneously.
 #### Filter by category
 Example: [/APKappen_v1?category=sprit](http://skruvdragarn.duckdns.org:1337/APKappen_v1?category=sprit)
 #### Pagination
-You must provide both postsPerIndex AND pageIndex do use pagination.
-Example: [/APKappen_v1?postsPerIndex=4&pageIndex=333](http://skruvdragarn.duckdns.org:1337/APKappen_v1?postsPerIndex=4&pageIndex=333)
+You must provide both postsPerPage AND pageIndex do use pagination.
+Example: [/APKappen_v1?postsPerPage=4&pageIndex=333](http://skruvdragarn.duckdns.org:1337/APKappen_v1?postsPerPage=4&pageIndex=333)
 
 ## Categories
 1. röda_viner

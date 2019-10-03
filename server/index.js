@@ -316,39 +316,33 @@ function getProductsNeatly(req, res){
   }else{
 
     let category = (req.query.category)
-    let postsPerIndex = Number(req.query.postsPerIndex);
+    let postsPerPage = Number(req.query.postsPerPage);
     let pageIndex = Number(req.query.pageIndex);
 
     let selectedArray = processedProductsList;
 
     // Selecting category
     if(category != undefined){
-      // Selected category
-      console.log("Category: " + category)
       selectedArray = categoryList[category.toLowerCase()]
     }
 
     // Pagination
-    if(isInteger(postsPerIndex) && isInteger(pageIndex)){
-      var startSliceIndex = (pageIndex*postsPerIndex);
-      var endSliceIndex = (pageIndex*postsPerIndex)+(postsPerIndex);
+    if(isInteger(postsPerPage) && isInteger(pageIndex)){
+      var startSliceIndex = (pageIndex*postsPerPage);
+      var endSliceIndex = (pageIndex*postsPerPage)+(postsPerPage);
 
       console.log("From " + startSliceIndex + " to " + endSliceIndex)
 
-      // Just 1 product
       if(startSliceIndex == endSliceIndex){
-        res.json(processedProductsList[startSliceIndex])
-        return;
+        selectedArray = selectedArray[startSliceIndex]
+      }else{
+        selectedArray = selectedArray.slice(startSliceIndex,endSliceIndex)
       }
-
-      res.json(processedProductsList.slice(startSliceIndex,endSliceIndex))
-      return;
-    }else{
-      res.json(selectedArray)
-      return;
     }
-  }
 
+    res.json(selectedArray)
+    return;
+  }
 }
 
 function openEndPoints(){
