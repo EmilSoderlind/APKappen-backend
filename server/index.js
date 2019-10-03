@@ -10,7 +10,7 @@ const port = 1337
 const systembolagetAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 
 let config = require('./config');
-
+let lastParseDate = new Date()
 let startedParseDate = new Date()
 
 let processedProductsList = "";
@@ -267,6 +267,7 @@ function resetProductArrays(){
 function reparseSystembolagetAPI(){
   console.log("Reparsing Systembolagets API")
   parseSystembolagetsAPI()
+  lastParseDate = new Date()
 }
 
 function parseSystembolagetsAPI(){
@@ -319,6 +320,10 @@ function openEndPoints(){
       listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.ProductNameBold +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoProduct(prod)+">"+addURLtoProduct(prod)+"</a></li>"
     }
     res.send('<div class=\"container\"><h2>TOP APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
+  })
+
+  app.get('/lastParse', (req, res) => {
+    res.send(lastParseDate.toString());
   })
 
   app.get('/', (req, res) => {
