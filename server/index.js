@@ -9,7 +9,8 @@ const app = express()
 const port = 1337
 const systembolagetAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 
-let config = require('./config');
+let secret = require('./secret');
+
 let lastParseDate = new Date()
 let startedParseDate = new Date()
 
@@ -266,7 +267,20 @@ function resetProductArrays(){
 function reparseSystembolagetAPI(){
   console.log("Reparsing Systembolagets API")
   parseSystembolagetsAPI()
+  updateDynamicDns()
   lastParseDate = new Date()
+}
+
+function updateDynamicDns(){
+  console.log("Updating dns.")
+
+  let dnsToken = secret.duckdnsToken;
+
+  request("https://www.duckdns.org/update?domains=skruvdragarn&token=" + dnsToken, function (error, response, body) {
+  console.error('error:', error); // Print the error if one occurred
+  console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+  console.log('body:', body); // Print the HTML for the Google homepage.
+});
 }
 
 function parseSystembolagetsAPI(){
@@ -279,7 +293,7 @@ function parseSystembolagetsAPI(){
   });
 
   headers = {
-   "Ocp-Apim-Subscription-Key" : config.Ocp_Apim_Subscription_Key
+   "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
   };
 
   request({ url: systembolagetAPIEndpoint, headers: headers }, function (error, response, body) {
@@ -414,7 +428,7 @@ function main(){
 
   openEndPoints()
 
-  parseSystembolagetsAPI()
+  reparseSystembolagetAPI()
 
 }
 
