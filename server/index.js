@@ -349,8 +349,6 @@ function getProductsNeatly(req, res){
       var startSliceIndex = (pageIndex*postsPerPage);
       var endSliceIndex = (pageIndex*postsPerPage)+(postsPerPage);
 
-      console.log("From " + startSliceIndex + " to " + endSliceIndex)
-
       if(startSliceIndex == endSliceIndex){
         selectedArray = selectedArray[startSliceIndex]
       }else{
@@ -358,6 +356,9 @@ function getProductsNeatly(req, res){
       }
     }
 
+    console.log("\nRequest:");
+    console.log(new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + " GMT")
+    console.log("Category: " + category + " from " + startSliceIndex + " to " + endSliceIndex)
     res.json(selectedArray)
     return;
   }
