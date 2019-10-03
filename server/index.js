@@ -309,6 +309,39 @@ function parseSystembolagetsAPI(){
   })
 }
 
+// category == null (ALL)
+function getProductsNeatly(req, res){
+
+  if(processedProductsList == undefined){
+    res.sendStatus(204)
+  }else{
+
+    var pagesPerIndex = Number(req.query.pagesPerIndex);
+    var pageIndex = Number(req.query.pageIndex);
+
+    if(isInteger(pagesPerIndex) && isInteger(pageIndex)){
+
+      var startSliceIndex = (pageIndex*pagesPerIndex);
+      var endSliceIndex = (pageIndex*pagesPerIndex)+(pagesPerIndex-1);
+
+      console.log("From " + startSliceIndex + " to " + endSliceIndex)
+
+      if(startSliceIndex == endSliceIndex){
+        res.json(processedProductsList[startSliceIndex])
+        return;
+      }
+
+      res.json(processedProductsList.slice(startSliceIndex,endSliceIndex))
+      return;
+    }else{
+      res.json(processedProductsList)
+      return;
+    }
+  }
+
+
+}
+
 function openEndPoints(){
 
   // HTML endpoint with top 500 from ARRAY
@@ -334,35 +367,7 @@ function openEndPoints(){
 
   // Return all articles
   app.get('/APKappen_v1', (req, res) => {
-    if(processedProductsList == undefined){
-      res.sendStatus(204)
-    }else{
-
-
-      var pagesPerIndex = Number(req.query.pagesPerIndex);
-      var pageIndex = Number(req.query.pageIndex);
-
-
-      console.log("pagesPerIndex: " + pagesPerIndex)
-      console.log("pageIndex: " + pageIndex)
-      if(true){
-
-
-
-        var startSliceIndex = (pageIndex*pagesPerIndex);
-        var endSliceIndex = ((pageIndex*pagesPerIndex)+pagesPerIndex)-1;
-
-
-        console.log("From " + startSliceIndex + " to " + endSliceIndex)
-
-        //res.json(processedProductsList.slice(startSliceIndex,endSliceIndex))
-        res.json(processedProductsList)
-
-      }else{
-        res.json(processedProductsList)
-        return;
-      }
-    }
+    getProductsNeatly(req,res)
   })
 
   // Return all articles with :category
