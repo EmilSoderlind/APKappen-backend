@@ -377,7 +377,7 @@ function openEndPoints(){
   })
 
   app.get('/lastParse', (req, res) => {
-    res.send(lastParseDate.toString());
+    res.send(lastParseDate);
   })
 
   app.get('/', (req, res) => {
