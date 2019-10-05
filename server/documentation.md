@@ -11,6 +11,9 @@ Example: [/APKappen_v1?category=sprit](http://skruvdragarn.duckdns.org:1337/APKa
 #### Pagination
 You must provide both postsPerPage AND pageIndex do use pagination.
 Example: [/APKappen_v1?postsPerPage=4&pageIndex=333](http://skruvdragarn.duckdns.org:1337/APKappen_v1?postsPerPage=4&pageIndex=333)
+#### Search
+Return products (ProductNameBold/ProductNameThin) that contains the given string.
+Example: [/APKappen_v1?search="pripps blå"](http://skruvdragarn.duckdns.org:1337/APKappen_v1?search="pripps blå")
 
 ## Categories
 1. röda_viner
@@ -24,9 +27,17 @@ Example: [/APKappen_v1?postsPerPage=4&pageIndex=333](http://skruvdragarn.duckdns
 9. aperitif_dessert
 10. alkoholfritt
 11. viner
-
-## Future categories
-All 1-11 but added as filtered by "standard assorment" ish. Standard assortment should be avaliable in all stores. 1-11 contains beställningssortiment..
+12. röda_viner_sa
+13. cider_och_blanddrycker_sa
+14. vita_viner_sa
+15. sprit_sa
+16. mousserande_viner_sa
+17. öl_sa
+18. roséviner_sa
+19. presentartiklar_sa
+20. aperitif_dessert_sa
+21. alkoholfritt_sa
+22. viner_sa
 
 ## Example
 ```javascript

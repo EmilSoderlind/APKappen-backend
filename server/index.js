@@ -34,46 +34,17 @@ let categoryList = {
   "viner": new Array(), // Added as extra!
 
   // Filteret out standard assortment (BS)
-  // TODO Fill below arrays
-  röda_viner_sa: new Array(), // Added as extra! - Standard assortment
-  cider_och_blanddrycker_sa: new Array(), // Added as extra! - Standard assortment
-  vita_viner_sa: new Array(), // Added as extra! - Standard assortment
-  sprit_sa: new Array(), // Added as extra! - Standard assortment
-  mousserande_viner_sa: new Array(), // Added as extra! - Standard assortment
-  öl_sa: new Array(), // Added as extra! - Standard assortment
-  roséviner_sa: new Array(), // Added as extra! - Standard assortment
-  presentartiklar_sa: new Array(), // Added as extra! - Standard assortment
-  aperitif_dessert_sa: new Array(), // Added as extra! - Standard assortment
-  alkoholfritt_sa: new Array(), // Added as extra! - Standard assortment
-  viner_sa: new Array()  // Added as extra! - Standard assortment
-}
-
-// Maybe remove?
-let categorySize = {
-  röda_viner: -1,
-  cider_och_blanddrycker: -1,
-  vita_viner: -1,
-  sprit: -1,
-  mousserande_viner: -1,
-  öl: -1,
-  roséviner: -1,
-  presentartiklar: -1,
-  aperitif_dessert: -1,
-  alkoholfritt: -1,
-
-  viner: -1,
-
-  röda_viner_sa: -1,
-  cider_och_blanddrycker_sa: -1,
-  vita_viner_sa: -1,
-  sprit_sa: -1,
-  mousserande_viner_sa: -1,
-  öl_sa: -1,
-  roséviner_sa: -1,
-  presentartiklar_sa: -1,
-  aperitif_dessert_sa: -1,
-  alkoholfritt_sa: -1,
-  viner_sa: -1,
+  "röda_viner_sa": new Array(), // Added as extra! - Standard assortment
+  "cider_och_blanddrycker_sa": new Array(), // Added as extra! - Standard assortment
+  "vita_viner_sa": new Array(), // Added as extra! - Standard assortment
+  "sprit_sa": new Array(), // Added as extra! - Standard assortment
+  "mousserande_viner_sa": new Array(), // Added as extra! - Standard assortment
+  "öl_sa": new Array(), // Added as extra! - Standard assortment
+  "roséviner_sa": new Array(), // Added as extra! - Standard assortment
+  "presentartiklar_sa": new Array(), // Added as extra! - Standard assortment
+  "aperitif_dessert_sa": new Array(), // Added as extra! - Standard assortment
+  "alkoholfritt_sa": new Array(), // Added as extra! - Standard assortment
+  "viner_sa": new Array()  // Added as extra! - Standard assortment
 }
 
 // Parse downloaded productList to category arrays
@@ -96,13 +67,17 @@ function createCategoryLists(productList){
 
       if(currentCategory == "röda_viner" || currentCategory == "mousserande_viner" || currentCategory == "vita_viner" || currentCategory == "roséviner"){
         allWines.push(productList[i])
+
+        // filling viner_sa
+        if(productList[i].Assortment == "FS"){
+          let standardAssortmentName = currentCategory + "_sa"
+          categoryList["viner_sa"].push(productList[i])
+        }
       }
 
       // Standard assortment --> Add to *_sa
-      if(productList[i].Assortment == "BS"){
+      if(productList[i].Assortment == "FS"){
         let standardAssortmentName = currentCategory + "_sa"
-        console.log("standardAssortmentName: " + standardAssortmentName)
-
         categoryList[standardAssortmentName].push(productList[i])
       }
 
@@ -264,17 +239,17 @@ function resetProductArrays(){
     "viner": new Array(), // Added as extra!
 
     // Filteret out standard assortment (BS)
-    röda_viner_standard_assortment: new Array(),
-    cider_och_blanddrycker_standard_assortment: new Array(),
-    vita_viner_standard_assortment: new Array(),
-    sprit_standard_assortment: new Array(),
-    mousserande_viner_standard_assortment: new Array(),
-    öl_standard_assortment: new Array(),
-    roséviner_standard_assortment: new Array(),
-    presentartiklar_standard_assortment: new Array(),
-    aperitif_dessert_standard_assortment: new Array(),
-    alkoholfritt_standard_assortment: new Array(),
-    viner_standard_assortment: new Array()
+    "röda_viner_sa": new Array(),
+    "cider_och_blanddrycker_sa": new Array(),
+    "vita_viner_sa": new Array(),
+    "sprit_sa": new Array(),
+    "mousserande_viner_sa": new Array(),
+    "öl_sa": new Array(),
+    "roséviner_sa": new Array(),
+    "presentartiklar_sa": new Array(),
+    "aperitif_dessert_sa": new Array(),
+    "alkoholfritt_sa": new Array(),
+    "viner_sa": new Array()
   }
 }
 
@@ -303,12 +278,24 @@ function updateDynamicDns(){
 }
 
 // Return sub-array of search result
-function searchProductArray(arrayToSearch){
+function searchProductArray(arrayToSearch,searchString){
 
-  for (let i = 0; i < productList.length; i++) {
+  var searchResult = [];
+
+  if(searchString == "" || searchString == undefined || searchString == null){
+    return searchResult;
+  }
+
+  for (let i = 0; i < arrayToSearch.length; i++) {
+
+      if(((arrayToSearch[i].ProductNameBold).toLowerCase()).includes(searchString.toLowerCase())){
+
+        searchResult.push(arrayToSearch[i])
+      }
 
   }
 
+  return searchResult;
 }
 
 function parseSystembolagetsAPI(){
@@ -360,6 +347,7 @@ function getProductsNeatly(req, res){
     let category = (req.query.category)
     let postsPerPage = Number(req.query.postsPerPage);
     let pageIndex = Number(req.query.pageIndex);
+    let search = req.query.search
 
     let selectedArray = processedProductsList;
 
@@ -380,9 +368,15 @@ function getProductsNeatly(req, res){
       }
     }
 
+    if(search != undefined){
+      selectedArray = searchProductArray(selectedArray,search.replaceAll("\"",""));
+    }
+
     console.log("\nRequest:");
     console.log(new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + " GMT")
     console.log("Category: " + category + " from " + startSliceIndex + " to " + endSliceIndex)
+    console.log("Search: " + search)
+
     res.json(selectedArray)
     return;
   }
@@ -405,7 +399,34 @@ function openEndPoints(){
   })
 
   app.get('/categories', (req, res) => {
-    res.send(categorySize);
+
+    var categoriesJSON = new Object();
+
+    categoriesJSON.röda_viner = categoryList.röda_viner.length;
+    categoriesJSON.röda_viner = categoryList.röda_viner.length;
+    categoriesJSON.vita_viner = categoryList.vita_viner.length;
+    categoriesJSON.sprit = categoryList.sprit.length;
+    categoriesJSON.cider_och_blanddrycker = categoryList.cider_och_blanddrycker.length;
+    categoriesJSON.mousserande_viner = categoryList.mousserande_viner.length;
+    categoriesJSON.öl = categoryList.öl.length;
+    categoriesJSON.roséviner = categoryList.roséviner.length;
+    categoriesJSON.presentartiklar = categoryList.presentartiklar.length;
+    categoriesJSON.aperitif_dessert = categoryList.aperitif_dessert.length;
+    categoriesJSON.alkoholfritt = categoryList.alkoholfritt.length;
+    categoriesJSON.viner = categoryList.viner.length;
+
+    categoriesJSON.röda_viner_sa = categoryList.röda_viner_sa.length;
+    categoriesJSON.vita_viner_sa = categoryList.vita_viner_sa.length;
+    categoriesJSON.sprit_sa = categoryList.sprit_sa.length;
+    categoriesJSON.cider_och_blanddrycker_sa = categoryList.cider_och_blanddrycker_sa.length;
+    categoriesJSON.mousserande_viner_sa = categoryList.mousserande_viner_sa.length;
+    categoriesJSON.öl_sa = categoryList.öl_sa.length;
+    categoriesJSON.roséviner_sa = categoryList.roséviner_sa.length;
+    categoriesJSON.presentartiklar_sa = categoryList.presentartiklar_sa.length;
+    categoriesJSON.aperitif_dessert_sa = categoryList.aperitif_dessert_sa.length;
+    categoriesJSON.alkoholfritt_sa = categoryList.alkoholfritt_sa.length;
+    categoriesJSON.viner_sa = categoryList.viner_sa.length;
+    res.send(categoriesJSON);
   })
 
   app.get('/', (req, res) => {
