@@ -31,7 +31,10 @@ let categoryList = {
   "presentartiklar": new Array(),
   "aperitif_dessert": new Array(),
   "alkoholfritt": new Array(),
+
   "viner": new Array(), // Added as extra!
+  "all": new Array(), // Added as extra!
+  "all_sa": new Array(), // Added as extra!
 
   // Filteret out standard assortment (BS)
   "röda_viner_sa": new Array(), // Added as extra! - Standard assortment
@@ -61,8 +64,10 @@ function createCategoryLists(productList){
     currentCategory = currentCategory.replaceAll("\"","").toLowerCase();
 
     if(categoryList[currentCategory] === undefined){
+      // If category == null they are weird
       //console.log("Found currentCategory=null!")
     }else{
+      categoryList["all"].push(productList[i])
       categoryList[currentCategory].push(productList[i])
 
       if(currentCategory == "röda_viner" || currentCategory == "mousserande_viner" || currentCategory == "vita_viner" || currentCategory == "roséviner"){
@@ -79,6 +84,7 @@ function createCategoryLists(productList){
       if(productList[i].Assortment == "FS"){
         let standardAssortmentName = currentCategory + "_sa"
         categoryList[standardAssortmentName].push(productList[i])
+        categoryList["all_sa"].push(productList[i])
       }
 
     }
@@ -236,7 +242,10 @@ function resetProductArrays(){
     "presentartiklar": new Array(),
     "aperitif_dessert": new Array(),
     "alkoholfritt": new Array(),
+
     "viner": new Array(), // Added as extra!
+    "all": new Array(), // Added as extra!
+    "all_sa": new Array(), // Added as extra!
 
     // Filteret out standard assortment (BS)
     "röda_viner_sa": new Array(),
@@ -415,7 +424,11 @@ function openEndPoints(){
     categoriesJSON.presentartiklar = categoryList.presentartiklar.length;
     categoriesJSON.aperitif_dessert = categoryList.aperitif_dessert.length;
     categoriesJSON.alkoholfritt = categoryList.alkoholfritt.length;
+
     categoriesJSON.viner = categoryList.viner.length;
+    categoriesJSON.all = categoryList.all.length;
+    categoriesJSON.all_sa = categoryList.all_sa.length;
+
 
     categoriesJSON.röda_viner_sa = categoryList.röda_viner_sa.length;
     categoriesJSON.vita_viner_sa = categoryList.vita_viner_sa.length;
@@ -443,6 +456,7 @@ function openEndPoints(){
   })
 
   // Return all articles with :category
+  // To be removed.
   app.get('/APKappen_v1/category/:selectedCategory', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
@@ -455,6 +469,7 @@ function openEndPoints(){
   })
 
   // Return all articles with :category top :numberOfArticles
+  // To be removed.
   app.get('/APKappen_v1/category/:selectedCategory/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
@@ -467,6 +482,7 @@ function openEndPoints(){
   })
 
   // Return top :numberOfArticles
+  // To be removed.
   app.get('/APKappen_v1/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)

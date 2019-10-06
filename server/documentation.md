@@ -46,6 +46,8 @@ http://skruvdragarn.duckdns.org:1337/categories
 20. aperitif_dessert_sa
 21. alkoholfritt_sa
 22. viner_sa
+23. all
+24. all_sa
 
 ## Example
 ```javascript
