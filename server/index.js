@@ -69,7 +69,7 @@ function createCategoryLists(productList){
         allWines.push(productList[i])
 
         // filling viner_sa
-        if(productList[i].Assortment == "FS"){
+        if(productList[i].Asosortment == "FS"){
           let standardAssortmentName = currentCategory + "_sa"
           categoryList["viner_sa"].push(productList[i])
         }
@@ -356,6 +356,11 @@ function getProductsNeatly(req, res){
       selectedArray = categoryList[category.toLowerCase()]
     }
 
+    // Filter by search-string
+    if(search != undefined){
+      selectedArray = searchProductArray(selectedArray,search.replaceAll("\"",""));
+    }
+
     // Pagination
     if(isInteger(postsPerPage) && isInteger(pageIndex)){
       var startSliceIndex = (pageIndex*postsPerPage);
@@ -368,13 +373,10 @@ function getProductsNeatly(req, res){
       }
     }
 
-    if(search != undefined){
-      selectedArray = searchProductArray(selectedArray,search.replaceAll("\"",""));
-    }
-
     console.log("\nRequest:");
     console.log(new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + " GMT")
-    console.log("Category: " + category + " from " + startSliceIndex + " to " + endSliceIndex)
+    console.log("Category: " + category)
+    console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
 
     res.json(selectedArray)
