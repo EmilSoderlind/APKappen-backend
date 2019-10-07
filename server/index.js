@@ -144,7 +144,6 @@ function addURLtoProduct(product){
   default:
     console.log("Found new category: " + product.Category)
     console.log(product)
-    // code block
 }
 
   // Get name-url-text
@@ -262,7 +261,7 @@ function resetProductArrays(){
   }
 }
 
-// Called every 24h
+// Called to update all products
 function reparseSystembolagetAPI(){
   console.log("Reparsing Systembolagets API")
   parseSystembolagetsAPI()
@@ -270,6 +269,7 @@ function reparseSystembolagetAPI(){
   lastParseDate = new Date()
 }
 
+// Make call to duckdns.org to update dynamic-IP skruvdragarn.duckdns.org
 function updateDynamicDns(){
   console.log("Updating dns")
 
@@ -288,7 +288,6 @@ function updateDynamicDns(){
 
 // Return sub-array of search result
 function searchProductArray(arrayToSearch,searchString){
-
   var searchResult = [];
 
   if(searchString == "" || searchString == undefined || searchString == null){
@@ -296,12 +295,9 @@ function searchProductArray(arrayToSearch,searchString){
   }
 
   for (let i = 0; i < arrayToSearch.length; i++) {
-
       if(((arrayToSearch[i].ProductNameBold).toLowerCase()).includes(searchString.toLowerCase())){
-
         searchResult.push(arrayToSearch[i])
       }
-
   }
 
   return searchResult;
@@ -312,8 +308,9 @@ function parseSystembolagetsAPI(){
 
   // Reparsing everyday at 03:00
   var s = schedule.scheduleJob('0 3 * * *', function(){
-    console.log("03:00 - Reparsing.")
+    console.log("03:00 | Reparsing")
     reparseSystembolagetAPI()
+    console.log("03:00 | Reparsing - DONE")
   });
 
   headers = {
@@ -429,7 +426,6 @@ function openEndPoints(){
     categoriesJSON.all = categoryList.all.length;
     categoriesJSON.all_sa = categoryList.all_sa.length;
 
-
     categoriesJSON.röda_viner_sa = categoryList.röda_viner_sa.length;
     categoriesJSON.vita_viner_sa = categoryList.vita_viner_sa.length;
     categoriesJSON.sprit_sa = categoryList.sprit_sa.length;
@@ -444,19 +440,19 @@ function openEndPoints(){
     res.send(categoriesJSON);
   })
 
+  // Documentation
   app.get('/', (req, res) => {
-
     var file = fs.readFileSync('documentation.md', 'utf8');
     res.send(marked(file.toString()));
   })
 
-  // Return all articles
+  // Main request endpoint
   app.get('/APKappen_v1', (req, res) => {
     getProductsNeatly(req,res)
   })
 
   // Return all articles with :category
-  // To be removed.
+  // TO BE REMOVED
   app.get('/APKappen_v1/category/:selectedCategory', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
@@ -469,7 +465,7 @@ function openEndPoints(){
   })
 
   // Return all articles with :category top :numberOfArticles
-  // To be removed.
+  // TO BE REMOVED
   app.get('/APKappen_v1/category/:selectedCategory/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
@@ -482,7 +478,7 @@ function openEndPoints(){
   })
 
   // Return top :numberOfArticles
-  // To be removed.
+  // TO BE REMOVED
   app.get('/APKappen_v1/:numberOfArticles', (req, res) => {
     if(processedProductsList == undefined){
       res.sendStatus(204)
@@ -493,15 +489,13 @@ function openEndPoints(){
     }
 
   })
+
   app.listen(port, () => console.log(`Listening on port ${port}!\n`))
 }
 
 function main(){
-
   openEndPoints()
-
   reparseSystembolagetAPI()
-
 }
 
 main();
