@@ -80,7 +80,4 @@ export default function() {
           },
           "Returning correct JSON": (r) => checkingJSON(r.body)
         });
-
-
-  //sleep(1);
 };
