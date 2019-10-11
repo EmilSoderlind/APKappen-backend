@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 COPY ./server/package*.json ./
 COPY ./server/documentation.md ./
-COPY ./server/secret.js ./
+#COPY ./server/secret.js ./
 
 RUN npm install
 # If you are building your code for production
