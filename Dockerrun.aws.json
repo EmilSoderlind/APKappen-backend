@@ -1,0 +1,10 @@
+{
+	"AWSEBDockerrunVersion": "1",
+	"Image": {
+		"Name": "skruvdragarn/apk-v1"
+	},
+	"Ports": [{
+		"ContainerPort": "1337"
+	}
+	]
+}
