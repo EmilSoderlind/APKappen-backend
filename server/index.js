@@ -375,7 +375,11 @@ function getProductsNeatly(req, res){
       var startSliceIndex = (pageIndex*postsPerPage);
       var endSliceIndex = (pageIndex*postsPerPage)+(postsPerPage);
 
-      if(startSliceIndex == endSliceIndex){
+      if(postsPerPage == 0){
+        // Requesting 0 posts per page --> Empty array
+        selectedArray = [];
+      }else if(startSliceIndex == endSliceIndex){
+        // request selecting 1 product
         selectedArray = selectedArray[startSliceIndex]
       }else{
 

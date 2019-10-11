@@ -14,7 +14,7 @@ export default function() {
         return true;
       }else{
         // Taking the last product in array
-        var productToTest = JSONContent[JSONContent.length-1]
+        var productToTest = JSONContent[0]
 
         if(productToTest.ProductNameBold == ""){
           console.log("productToTest.ProductNameBold is empty")
@@ -48,7 +48,7 @@ export default function() {
   }
 
   // Missing å ä ö é since k6 n' stuff is ruuude
-  let categories = ["all","all_sa","cider_och_blanddrycker","vita_viner","sprit","mousserande_viner","presentartiklar","aperitif_dessert","alkoholfritt","viner","cider_och_blanddrycker_sa","vita_viner_sa","sprit_sa","mousserande_viner_sa","presentartiklar_sa","aperitif_dessert_sa","alkoholfritt_sa","viner_sa"]
+  let categories = ["all","all_sa","cider_och_blanddrycker","vita_viner","sprit","mousserande_viner","presentartiklar","aperitif_dessert","alkoholfritt","viner","cider_och_blanddrycker_sa","vita_viner_sa","sprit_sa","mousserande_viner_sa","presentartiklar_sa","aperitif_dessert_sa","alkoholfritt","viner_sa"]
 
   var categoryNumber = Math.floor((Math.random() * categories.length) + 0);
 
@@ -60,7 +60,7 @@ export default function() {
   var localURL = "http://localhost"
   var hostedURL = "http://skruvdragarn.duckdns.org"
 
-  var queryURL = localURL + ":1337/APKappen_v1?category="+randomCategory+"\&postsPerPage="+postsPerPage+"\&pageIndex=" + pageIndex;
+  var queryURL = hostedURL + ":1337/APKappen_v1?category="+randomCategory+"\&postsPerPage="+postsPerPage+"\&pageIndex=" + pageIndex;
 
   //console.log(queryURL)
   let response = http.get(queryURL);
