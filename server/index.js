@@ -304,6 +304,9 @@ function searchProductArray(arrayToSearch,searchString){
 }
 
 function parseSystembolagetsAPI(){
+
+  startedParseDate = new Date()
+
   console.log("Parsing from systembolagets API")
 
   // Reparsing everyday at 03:00
@@ -375,16 +378,28 @@ function getProductsNeatly(req, res){
       if(startSliceIndex == endSliceIndex){
         selectedArray = selectedArray[startSliceIndex]
       }else{
-        selectedArray = selectedArray.slice(startSliceIndex,endSliceIndex)
+
+        // If we are requesting a index outside category-array
+        if(selectedArray.length < endSliceIndex){
+          endSliceIndex = selectedArray.length;
+        }
+
+        // If we are requesting a index outside category-array
+        if(selectedArray.length < startSliceIndex){
+          selectedArray = []
+        }else{
+          selectedArray = selectedArray.slice(startSliceIndex,endSliceIndex)
+        }
+
       }
     }
-
+    /*
     console.log("\nRequest:");
     console.log(new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + " GMT")
     console.log("Category: " + category)
     console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
-
+    */
     res.json(selectedArray)
     return;
   }
