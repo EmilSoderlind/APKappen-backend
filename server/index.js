@@ -401,6 +401,12 @@ function getProductsNeatly(req, res){
     // Selecting category
     if(category != undefined){
       selectedArray = categoryList[category.toLowerCase()]
+
+      // If category is invalid -> Return empty array
+      if(selectedArray == undefined){
+        res.json([]);
+        return;
+      }
     }
 
     // Filter by search-string
@@ -498,7 +504,7 @@ function openEndPoints(){
 
   // Documentation
   app.get('/', (req, res) => {
-    var file = fs.readFileSync('documentation.md', 'utf8');
+    var file = fs.readFileSync('./Documentation.md', 'utf8');
     res.send(marked(file.toString()));
   })
 
