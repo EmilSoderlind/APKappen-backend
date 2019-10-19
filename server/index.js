@@ -333,6 +333,10 @@ function searchProductArray(arrayToSearch,searchString){
       }
   }
 
+  searchResult = searchResult.sort(function(a, b) {
+    return parseFloat(b.APK) - parseFloat(a.APK);
+  });
+
   return searchResult;
 }
 
@@ -362,6 +366,7 @@ function parseSystembolagetsAPI(){
 
       let beforeProcessAndSortDate = new Date()
       processParsedProducts(parsedProducts)
+
       parsedProducts.sort(function(a, b) {
         return parseFloat(b.APK) - parseFloat(a.APK);
       });
