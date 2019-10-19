@@ -49,8 +49,6 @@ let categoryList = {
 
 function getEnglishCategoryName(swedishName){
 
-  console.log("swedishName: " + swedishName);
-
   if(swedishName == null){
     return "undefined";
   }
@@ -91,15 +89,7 @@ function createCategoryLists(productList){
 
   for (var i = 0; i < productList.length; i++) {
 
-    /*
-    let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll(" ","_")
-    currentCategory = currentCategory.replaceAll("&","").replaceAll("__","_")
-    currentCategory = currentCategory.replaceAll("\"","").toLowerCase();
-    */
-
     let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll("\"","");
-
-    console.log("currentCategory: " + currentCategory)
 
     if(categoryList[currentCategory] === undefined){
       // If category == null they are weird
