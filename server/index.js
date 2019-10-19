@@ -470,7 +470,6 @@ function openEndPoints(){
   })
 
   app.get('/categories', (req, res) => {
-
     var categoriesJSON = new Object();
 
     categoriesJSON.red_wine = categoryList.red_wine.length;
