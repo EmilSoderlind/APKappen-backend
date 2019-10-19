@@ -20,34 +20,8 @@ Example: http://skruvdragarn.duckdns.org:1337/APKappen_v1?search="pripps%20blå"
 http://skruvdragarn.duckdns.org:1337/
 #### Last parse date
 http://skruvdragarn.duckdns.org:1337/lastParse
-#### Size of each category
+#### Names + size of each category
 http://skruvdragarn.duckdns.org:1337/categories
-
-## Categories
-1. röda_viner
-2. cider_och_blanddrycker
-3. vita_viner
-4. sprit
-5. mousserande_viner
-6. öl
-7. roséviner
-8. presentartiklar
-9. aperitif_dessert
-10. alkoholfritt
-11. viner
-12. röda_viner_sa
-13. cider_och_blanddrycker_sa
-14. vita_viner_sa
-15. sprit_sa
-16. mousserande_viner_sa
-17. öl_sa
-18. roséviner_sa
-19. presentartiklar_sa
-20. aperitif_dessert_sa
-21. alkoholfritt_sa
-22. viner_sa
-23. all
-24. all_sa
 
 ## Example
 ```javascript

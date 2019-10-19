@@ -16,38 +16,70 @@ let startedParseDate = new Date()
 
 let processedProductsList = "";
 
-// categoiesList
-// |---> "Öl" |
-// |          | ---> product
-// |          | ---> product
-let categoryList = {
-  "röda_viner": new Array(),
-  "cider_och_blanddrycker": new Array(),
-  "vita_viner": new Array(),
-  "sprit": new Array(),
-  "mousserande_viner": new Array(),
-  "öl": new Array(),
-  "roséviner": new Array(),
-  "presentartiklar": new Array(),
-  "aperitif_dessert": new Array(),
-  "alkoholfritt": new Array(),
 
-  "viner": new Array(), // Added as extra!
+let categoryList = {
+  "red_wine": new Array(),
+  "cider_and_mixed_drink": new Array(),
+  "white_wine": new Array(),
+  "spirits": new Array(),
+  "sparkling_wine": new Array(),
+  "beer": new Array(),
+  "rose_wine": new Array(),
+  "gifts": new Array(),
+  "aperitif_and_dessert": new Array(),
+  "alcohol_free": new Array(),
+
+  "wine": new Array(), // Added as extra!
   "all": new Array(), // Added as extra!
   "all_sa": new Array(), // Added as extra!
 
   // Filteret out standard assortment (BS)
-  "röda_viner_sa": new Array(), // Added as extra! - Standard assortment
-  "cider_och_blanddrycker_sa": new Array(), // Added as extra! - Standard assortment
-  "vita_viner_sa": new Array(), // Added as extra! - Standard assortment
-  "sprit_sa": new Array(), // Added as extra! - Standard assortment
-  "mousserande_viner_sa": new Array(), // Added as extra! - Standard assortment
-  "öl_sa": new Array(), // Added as extra! - Standard assortment
-  "roséviner_sa": new Array(), // Added as extra! - Standard assortment
-  "presentartiklar_sa": new Array(), // Added as extra! - Standard assortment
-  "aperitif_dessert_sa": new Array(), // Added as extra! - Standard assortment
-  "alkoholfritt_sa": new Array(), // Added as extra! - Standard assortment
-  "viner_sa": new Array()  // Added as extra! - Standard assortment
+  "red_wine_sa": new Array(), // Added as extra! - Standard assortment
+  "cider_and_mixed_drink_sa": new Array(), // Added as extra! - Standard assortment
+  "white_wine_sa": new Array(), // Added as extra! - Standard assortment
+  "spirits_sa": new Array(), // Added as extra! - Standard assortment
+  "sparkling_wine_sa": new Array(), // Added as extra! - Standard assortment
+  "beer_sa": new Array(), // Added as extra! - Standard assortment
+  "rose_wine_sa": new Array(), // Added as extra! - Standard assortment
+  "gifts_sa": new Array(), // Added as extra! - Standard assortment
+  "aperitif_and_dessert_sa": new Array(), // Added as extra! - Standard assortment
+  "alcohol_free_sa": new Array(), // Added as extra! - Standard assortment
+  "wine_sa": new Array()  // Added as extra! - Standard assortment
+}
+
+function getEnglishCategoryName(swedishName){
+
+  console.log("swedishName: " + swedishName);
+
+  if(swedishName == null){
+    return "undefined";
+  }
+
+  switch(swedishName.replaceAll("\"","")) {
+    case "Röda viner":
+      return "red_wine";
+    case "Cider och blanddrycker":
+      return "cider_and_mixed_drink";
+    case "Vita viner":
+      return "white_wine";
+    case "Sprit":
+      return "spirits";
+    case "Mousserande viner":
+      return "sparkling_wine";
+    case "Öl":
+      return "beer";
+    case "Roséviner":
+      return "rose_wine";
+    case "Presentartiklar":
+      return "gifts";
+    case "Aperitif & dessert":
+      return "aperitif_and_dessert"
+    case "Alkoholfritt":
+      return "alcohol_free"
+    default:
+      console.log("Found new category: " + swedishName)
+  }
+
 }
 
 // Parse downloaded productList to category arrays
@@ -59,9 +91,15 @@ function createCategoryLists(productList){
 
   for (var i = 0; i < productList.length; i++) {
 
+    /*
     let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll(" ","_")
     currentCategory = currentCategory.replaceAll("&","").replaceAll("__","_")
     currentCategory = currentCategory.replaceAll("\"","").toLowerCase();
+    */
+
+    let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll("\"","");
+
+    console.log("currentCategory: " + currentCategory)
 
     if(categoryList[currentCategory] === undefined){
       // If category == null they are weird
@@ -70,13 +108,12 @@ function createCategoryLists(productList){
       categoryList["all"].push(productList[i])
       categoryList[currentCategory].push(productList[i])
 
-      if(currentCategory == "röda_viner" || currentCategory == "mousserande_viner" || currentCategory == "vita_viner" || currentCategory == "roséviner"){
+      if(currentCategory == "red_wine" || currentCategory == "sparkling_wine" || currentCategory == "white_wine" || currentCategory == "rose_wine"){
         allWines.push(productList[i])
 
         // filling viner_sa
-        if(productList[i].Asosortment == "FS"){
-          let standardAssortmentName = currentCategory + "_sa"
-          categoryList["viner_sa"].push(productList[i])
+        if(productList[i].Assortment == "FS"){
+          categoryList["wine_sa"].push(productList[i])
         }
       }
 
@@ -94,7 +131,7 @@ function createCategoryLists(productList){
     return parseFloat(b.APK) - parseFloat(a.APK);
   });
 
-  categoryList["viner"] = allWines;
+  categoryList["wine"] = allWines;
 }
 
 // Create and set .URL attribute in article JSON-objects
@@ -105,45 +142,45 @@ function addURLtoProduct(product){
   let nameURL = "";
   let numberURL = product.ProductNumber;
 
-  if(product.Category == null){
+  if(product.Category == "undefined"){
     return;
   }
 
   // Get category-url-text
-  switch(String(product.Category)) {
-  case "Röda viner":
+  switch(product.Category) {
+  case "red_wine":
     categoryURL = "roda-viner"
     break;
-  case "Cider och blanddrycker":
+  case "cider_and_mixed_drink":
     categoryURL = "cider-och-blanddrycker"
     break;
-  case "Vita viner":
+  case "white_wine":
     categoryURL = "vita-viner"
     break;
-  case "Sprit":
+  case "spirits":
     categoryURL = "sprit";
     break;
-  case "Mousserande viner":
+  case "sparkling_wine":
     categoryURL = "mousserande-viner";
     break;
-  case "Öl":
+  case "beer":
     categoryURL = "ol";
     break;
-  case "Roséviner":
+  case "rose_wine":
     categoryURL = "roseviner";
     break;
-  case "Presentartiklar":
+  case "gifts":
     categoryURL = "presentartiklar"
     break;
-  case "Aperitif & dessert":
+  case "aperitif_and_dessert":
     categoryURL = "aperitif-dessert"
     break;
-  case "Alkoholfritt":
+  case "alcohol_free":
     categoryURL = "alkoholfritt"
     break;
   default:
+    console.log("Creating URLs")
     console.log("Found new category: " + product.Category)
-    console.log(product)
 }
 
   // Get name-url-text
@@ -156,6 +193,10 @@ function addURLtoProduct(product){
   let createdURL = baseURL+"/"+categoryURL+"/"+nameURL+"-"+numberURL;
   product.URL = createdURL;
   return createdURL;
+}
+
+function translateSwedishCategories(product){
+  product.Category = getEnglishCategoryName(product.Category);
 }
 
 // Add APK + URL to list of article objects
@@ -172,6 +213,8 @@ function processParsedProducts(productList){
       productList.splice(i,1);
       //console.log("Removed a IsCompletelyOutOfStock=true")
     }
+
+    translateSwedishCategories(productList[i])
 
     addURLtoProduct(productList[i])
     addAPKtoProduct(productList[i])
@@ -231,33 +274,33 @@ function resetProductArrays(){
   console.log("Resetting product arrays.")
 
   categoryList = {
-    "röda_viner": new Array(),
-    "cider_och_blanddrycker": new Array(),
-    "vita_viner": new Array(),
-    "sprit": new Array(),
-    "mousserande_viner": new Array(),
-    "öl": new Array(),
-    "roséviner": new Array(),
-    "presentartiklar": new Array(),
-    "aperitif_dessert": new Array(),
-    "alkoholfritt": new Array(),
+    "red_wine": new Array(),
+    "cider_and_mixed_drink": new Array(),
+    "white_wine": new Array(),
+    "spirits": new Array(),
+    "sparkling_wine": new Array(),
+    "beer": new Array(),
+    "rose_wine": new Array(),
+    "gifts": new Array(),
+    "aperitif_and_dessert": new Array(),
+    "alcohol_free": new Array(),
 
-    "viner": new Array(), // Added as extra!
+    "wine": new Array(), // Added as extra!
     "all": new Array(), // Added as extra!
     "all_sa": new Array(), // Added as extra!
 
     // Filteret out standard assortment (BS)
-    "röda_viner_sa": new Array(),
-    "cider_och_blanddrycker_sa": new Array(),
-    "vita_viner_sa": new Array(),
-    "sprit_sa": new Array(),
-    "mousserande_viner_sa": new Array(),
-    "öl_sa": new Array(),
-    "roséviner_sa": new Array(),
-    "presentartiklar_sa": new Array(),
-    "aperitif_dessert_sa": new Array(),
-    "alkoholfritt_sa": new Array(),
-    "viner_sa": new Array()
+    "red_wine_sa": new Array(), // Added as extra! - Standard assortment
+    "cider_and_mixed_drink_sa": new Array(), // Added as extra! - Standard assortment
+    "white_wine_sa": new Array(), // Added as extra! - Standard assortment
+    "spirits_sa": new Array(), // Added as extra! - Standard assortment
+    "sparkling_wine_sa": new Array(), // Added as extra! - Standard assortment
+    "beer_sa": new Array(), // Added as extra! - Standard assortment
+    "rose_wine_sa": new Array(), // Added as extra! - Standard assortment
+    "gifts_sa": new Array(), // Added as extra! - Standard assortment
+    "aperitif_and_dessert_sa": new Array(), // Added as extra! - Standard assortment
+    "alcohol_free_sa": new Array(), // Added as extra! - Standard assortment
+    "wine_sa": new Array()  // Added as extra! - Standard assortment
   }
 }
 
@@ -429,33 +472,32 @@ function openEndPoints(){
 
     var categoriesJSON = new Object();
 
-    categoriesJSON.röda_viner = categoryList.röda_viner.length;
-    categoriesJSON.röda_viner = categoryList.röda_viner.length;
-    categoriesJSON.vita_viner = categoryList.vita_viner.length;
-    categoriesJSON.sprit = categoryList.sprit.length;
-    categoriesJSON.cider_och_blanddrycker = categoryList.cider_och_blanddrycker.length;
-    categoriesJSON.mousserande_viner = categoryList.mousserande_viner.length;
-    categoriesJSON.öl = categoryList.öl.length;
-    categoriesJSON.roséviner = categoryList.roséviner.length;
-    categoriesJSON.presentartiklar = categoryList.presentartiklar.length;
-    categoriesJSON.aperitif_dessert = categoryList.aperitif_dessert.length;
-    categoriesJSON.alkoholfritt = categoryList.alkoholfritt.length;
+    categoriesJSON.red_wine = categoryList.red_wine.length;
+    categoriesJSON.white_wine = categoryList.white_wine.length;
+    categoriesJSON.spirits = categoryList.spirits.length;
+    categoriesJSON.cider_and_mixed_drink = categoryList.cider_and_mixed_drink.length;
+    categoriesJSON.sparkling_wine = categoryList.sparkling_wine.length;
+    categoriesJSON.beer = categoryList.beer.length;
+    categoriesJSON.rose_wine = categoryList.rose_wine.length;
+    categoriesJSON.gifts = categoryList.gifts.length;
+    categoriesJSON.aperitif_and_dessert = categoryList.aperitif_and_dessert.length;
+    categoriesJSON.alcohol_free = categoryList.alcohol_free.length;
 
-    categoriesJSON.viner = categoryList.viner.length;
+    categoriesJSON.wine = categoryList.wine.length;
+    categoriesJSON.wine_sa = categoryList.wine_sa.length;
     categoriesJSON.all = categoryList.all.length;
     categoriesJSON.all_sa = categoryList.all_sa.length;
 
-    categoriesJSON.röda_viner_sa = categoryList.röda_viner_sa.length;
-    categoriesJSON.vita_viner_sa = categoryList.vita_viner_sa.length;
-    categoriesJSON.sprit_sa = categoryList.sprit_sa.length;
-    categoriesJSON.cider_och_blanddrycker_sa = categoryList.cider_och_blanddrycker_sa.length;
-    categoriesJSON.mousserande_viner_sa = categoryList.mousserande_viner_sa.length;
-    categoriesJSON.öl_sa = categoryList.öl_sa.length;
-    categoriesJSON.roséviner_sa = categoryList.roséviner_sa.length;
-    categoriesJSON.presentartiklar_sa = categoryList.presentartiklar_sa.length;
-    categoriesJSON.aperitif_dessert_sa = categoryList.aperitif_dessert_sa.length;
-    categoriesJSON.alkoholfritt_sa = categoryList.alkoholfritt_sa.length;
-    categoriesJSON.viner_sa = categoryList.viner_sa.length;
+    categoriesJSON.red_wine_sa = categoryList.red_wine_sa.length;
+    categoriesJSON.white_wine_sa = categoryList.white_wine_sa.length;
+    categoriesJSON.spirits_sa = categoryList.spirits_sa.length;
+    categoriesJSON.cider_and_mixed_drink_sa = categoryList.cider_and_mixed_drink_sa.length;
+    categoriesJSON.sparkling_wine_sa = categoryList.sparkling_wine_sa.length;
+    categoriesJSON.beer_sa = categoryList.beer_sa.length;
+    categoriesJSON.rose_wine_sa = categoryList.rose_wine_sa.length;
+    categoriesJSON.gifts_sa = categoryList.gifts_sa.length;
+    categoriesJSON.aperitif_and_dessert_sa = categoryList.aperitif_and_dessert_sa.length;
+    categoriesJSON.alcohol_free_sa = categoryList.alcohol_free_sa.length;
     res.send(categoriesJSON);
   })
 
