@@ -1,7 +1,8 @@
 # Documentation APKappen_v1
 All returned products is sorted by APK.
 
-## BaseURL: http://skruvdragarn.duckdns.org:1337
+## BaseURL: http://skruvdragarn.duckdns.org
+## PORT: 1337/1338
 
 ## Endpoint: /APKappen_v1
 ### Query options
@@ -22,6 +23,8 @@ http://skruvdragarn.duckdns.org:1337/
 http://skruvdragarn.duckdns.org:1337/lastParse
 #### Names + size of each category
 http://skruvdragarn.duckdns.org:1337/categories
+#### Status of API (Health monitor)
+http://skruvdragarn.duckdns.org:1337/status
 
 ## Example
 ```javascript
