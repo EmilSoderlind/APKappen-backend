@@ -552,6 +552,42 @@ function openEndPoints(){
   })
 
   app.listen(port, () => console.log(`Listening on port ${port}!\n`))
+
+
+  // Endpoint for express-status-monitor
+  provideStatusMonitor()
+}
+
+function provideStatusMonitor(){
+  let statusMonitor = require('express-status-monitor')({title: "APKappen API monitor",
+  healthChecks: [{
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v1?category=beer_sa&postsPerPage=1&pageIndex=10',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v1',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v1?category=wine_sa',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/lastParse',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/',
+    port: '1337'
+  }]});
+
+  app.use(statusMonitor);
 }
 
 function main(){
