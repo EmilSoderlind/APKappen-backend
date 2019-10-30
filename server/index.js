@@ -7,7 +7,9 @@ let schedule = require('node-schedule');
 const express = require('express')
 const app = express()
 const port = 1337
-const systembolagetAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
+
+const productsAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
+const storesAPIEndpoint = "https://api-extern.systembolaget.se/site/v1/site";
 
 let secret = require('./secret');
 
@@ -297,7 +299,8 @@ function resetProductArrays(){
 // Called to update all products
 function reparseSystembolagetAPI(){
   console.log("Reparsing Systembolagets API")
-  parseSystembolagetsAPI()
+  parseStores()
+  parseProducts()
   //updateDynamicDns()
   lastParseDate = new Date()
 }
@@ -340,7 +343,28 @@ function searchProductArray(arrayToSearch,searchString){
   return searchResult;
 }
 
-function parseSystembolagetsAPI(){
+function parseStores(){
+
+  console.log("Parsing stores from API")
+
+  request({ url: storesAPIEndpoint, headers: headers }, function (error, response, body) {
+
+    if (!error && response.statusCode == 200) {
+
+      let parsedStores = JSON.parse(body);
+
+      console.log(parseStores)
+
+
+    }else{
+      console.log("ERROR: \n" + response.statusCode + "-" + error)
+    }
+  })
+
+
+}
+
+function parseProducts(){
 
   startedParseDate = new Date()
 
@@ -357,7 +381,7 @@ function parseSystembolagetsAPI(){
    "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
   };
 
-  request({ url: systembolagetAPIEndpoint, headers: headers }, function (error, response, body) {
+  request({ url: productsAPIEndpoint, headers: headers }, function (error, response, body) {
     console.info('Download time: %dms', new Date() - startedParseDate)
 
     if (!error && response.statusCode == 200) {
