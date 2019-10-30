@@ -10,14 +10,22 @@ const port = 1337
 
 const productsAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 const storesAPIEndpoint = "https://api-extern.systembolaget.se/site/v1/site";
+const productsWithStoreAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product/getproductswithstore";
 
 let secret = require('./secret');
+
+let APIHeaders = {
+  "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
+ };
+
 
 let lastParseDate = new Date()
 let startedParseDate = new Date()
 
 let processedProductsList = "";
 
+let storesParsed = false;
+let parsedStores = [];
 
 let categoryList = {
   "red_wine": new Array(),
@@ -345,23 +353,95 @@ function searchProductArray(arrayToSearch,searchString){
 
 function parseStores(){
 
+  storesParsed = false;
   console.log("Parsing stores from API")
 
-  request({ url: storesAPIEndpoint, headers: headers }, function (error, response, body) {
+  // Get stores
+  request({ url: storesAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
 
     if (!error && response.statusCode == 200) {
 
-      let parsedStores = JSON.parse(body);
+      parsedStores = JSON.parse(body)
 
-      console.log(parseStores)
+      /*
+      OpeninHours: {{}}
+      IsTastingStore: false,
+      SiteId: '0102',
+      Alias: 'Fältöversten',
+      Address: 'Karlaplan 13',
+      DisplayName: null,
+      PostalCode: '115 20',
+      City: 'Stockholm',
+      County: 'Stockholms län',
+      Country: null,
+      IsStore: true,
+      IsAgent: false,
+      IsActiveForAgentOrder: false,
+      Phone: '08-662 22 89',
+      Email: null,
+      Services: null,
+      Depot: null,
+      Name: 'Fältöversten',
+      Position: { Long: 18.09087976878224, Lat: 59.3388103109104 }
+      */
+
+      // Get products in stores
+      request({ url: productsWithStoreAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
+
+        if (!error && response.statusCode == 200) {
+    
+          productsWithStore = JSON.parse(body)
+
+          console.log("----->>")
+          console.log(productsWithStore)
+
+          /*
+          {
+          SiteId: '0102',
+          Products: [
+            { ProductId: '11261', ProductNumber: '1236601' },
+            { ProductId: '1008061', ProductNumber: '7570701' },
+            { ProductId: '24397590', ProductNumber: '9012301' },
+            { ProductId: '17049', ProductNumber: '2267901' },
+              ...
+          */  
+          
+          // For each store - currentSiteId
+          for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
+
+            let currentSiteId = parsedStores[storeIndex].SiteId;
+
+            // For each productInStore (List with products in every store (with id)) - currentProductsWithStoreSiteId
+            for(let productsWithStoreIndex = 0; productsWithStoreIndex < productsWithStore.length; productsWithStoreIndex++){
+              let currentProductsWithStoreSiteId = productsWithStore[productsWithStoreIndex]['SiteId'];
+              //console.log(currentSiteId + " <-> " + currentProductsWithStoreSiteId);
+
+              if(currentProductsWithStoreSiteId == currentSiteId){
+                console.log("SAME!")
+
+                // Someting wrong here!
+                parsedStores[storeIndex].ProductsIdList = productsWithStore.Products;
+
+                console.log(parsedStores[storeIndex])
+                break;
+              }
+              
+            }
+          }
+          storesParsed = true;
+          //console.log(parsedStores)
+  
+        }else{
+          console.log("ERROR: \n" + response.statusCode + "-" + error)
+        }
+      })
+
 
 
     }else{
       console.log("ERROR: \n" + response.statusCode + "-" + error)
     }
   })
-
-
 }
 
 function parseProducts(){
@@ -377,11 +457,7 @@ function parseProducts(){
     console.log("03:00 | Reparsing - DONE")
   });
 
-  headers = {
-   "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
-  };
-
-  request({ url: productsAPIEndpoint, headers: headers }, function (error, response, body) {
+  request({ url: productsAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
     console.info('Download time: %dms', new Date() - startedParseDate)
 
     if (!error && response.statusCode == 200) {
