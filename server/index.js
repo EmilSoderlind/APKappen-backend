@@ -431,6 +431,7 @@ function parseStores(){
             if(currentStore.IsStore){
     
               stores[currentStoreSiteId] = parsedStores[storeIndex];
+              stores[currentStoreSiteId].Products = [];
 
               // For each productId in store
               for(let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++){
@@ -443,15 +444,10 @@ function parseStores(){
 
                   let currentParsedProduct = categoryList.all[parsedProductsIndex];
 
-                  if(currentParsedProduct.ProductId = currentProductInStoreProductId){
-                    
-                    stores[currentStoreSiteId].Products = [];
-
-                    console.log(currentParsedProduct)
+                  if(currentParsedProduct.ProductId == currentProductInStoreProductId){
                     
                     stores[currentStoreSiteId].Products.push(currentParsedProduct)
                     
-
                     break;
                   }
                 }
@@ -459,22 +455,14 @@ function parseStores(){
             }
           }
 
-          console.log(stores)
-          console.log(stores['Products'])
-
-          console.log("DONE")
-
           storesParsed = true;
-          //console.log(parsedStores)
+          console.log(stores)
   
         }else{
           console.log("ERROR: \n" + response.statusCode + "-" + error)
           console.log(response.body)
-
         }
       })
-
-
 
     }else{
       console.log("ERROR: \n" + response.statusCode + "-" + error)
@@ -536,7 +524,6 @@ function getProductsNeatly(req, res){
     let postsPerPage = Number(req.query.postsPerPage);
     let pageIndex = Number(req.query.pageIndex);
     let search = req.query.search
-
     let selectedArray = processedProductsList;
 
     // Selecting category
