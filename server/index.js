@@ -25,7 +25,8 @@ let startedParseDate = new Date()
 let processedProductsList = "";
 
 let storesParsed = false;
-let parsedStores = [];
+
+let stores = [];
 
 let categoryList = {
   "red_wine": new Array(),
@@ -392,9 +393,6 @@ function parseStores(){
     
           productsWithStore = JSON.parse(body)
 
-          console.log("----->>")
-          console.log(productsWithStore)
-
           /*
           {
           SiteId: '0102',
@@ -413,26 +411,66 @@ function parseStores(){
 
             // For each productInStore (List with products in every store (with id)) - currentProductsWithStoreSiteId
             for(let productsWithStoreIndex = 0; productsWithStoreIndex < productsWithStore.length; productsWithStoreIndex++){
-              let currentProductsWithStoreSiteId = productsWithStore[productsWithStoreIndex]['SiteId'];
-              //console.log(currentSiteId + " <-> " + currentProductsWithStoreSiteId);
+              let currentProductWithStore = productsWithStore[productsWithStoreIndex];
 
-              if(currentProductsWithStoreSiteId == currentSiteId){
-                console.log("SAME!")
-
-                // Someting wrong here!
-                parsedStores[storeIndex].ProductsIdList = productsWithStore.Products;
-
-                console.log(parsedStores[storeIndex])
+              if(currentProductWithStore['SiteId'] == currentSiteId){
+                parsedStores[storeIndex]['ProductsIdList'] = currentProductWithStore.Products;
                 break;
-              }
-              
+              } 
             }
           }
+
+
+          // For each store
+          for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
+
+            let currentStore = parsedStores[storeIndex]
+            let currentStoreSiteId = currentStore.SiteId;
+
+            // Filtering out non-stores
+            if(currentStore.IsStore){
+    
+              stores[currentStoreSiteId] = parsedStores[storeIndex];
+
+              // For each productId in store
+              for(let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++){
+                
+                let currentProductInStoreProductId = parsedStores[storeIndex]['ProductsIdList'][productsInStoreIndex].ProductId;
+
+                // For each parsed product in full assorment
+                // Searching for product with productId - Adding to store
+                for(let parsedProductsIndex = 0; parsedProductsIndex < categoryList.all.length; parsedProductsIndex++){
+
+                  let currentParsedProduct = categoryList.all[parsedProductsIndex];
+
+                  if(currentParsedProduct.ProductId = currentProductInStoreProductId){
+                    
+                    stores[currentStoreSiteId].Products = [];
+
+                    console.log(currentParsedProduct)
+                    
+                    stores[currentStoreSiteId].Products.push(currentParsedProduct)
+                    
+
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
+          console.log(stores)
+          console.log(stores['Products'])
+
+          console.log("DONE")
+
           storesParsed = true;
           //console.log(parsedStores)
   
         }else{
           console.log("ERROR: \n" + response.statusCode + "-" + error)
+          console.log(response.body)
+
         }
       })
 
@@ -440,6 +478,8 @@ function parseStores(){
 
     }else{
       console.log("ERROR: \n" + response.statusCode + "-" + error)
+      console.log(response.body)
+
     }
   })
 }
@@ -480,6 +520,7 @@ function parseProducts(){
 
     }else{
       console.log("ERROR: \n" + response.statusCode + "-" + error)
+      console.log(response.body)
     }
   })
 }
