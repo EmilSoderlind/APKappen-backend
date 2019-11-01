@@ -354,6 +354,7 @@ function searchProductArray(arrayToSearch,searchString){
 
 function parseStores(){
 
+  let beforeStoreParse = new Date();
   storesParsed = false;
   console.log("Parsing stores from API")
 
@@ -420,7 +421,6 @@ function parseStores(){
             }
           }
 
-
           // For each store
           for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
 
@@ -452,12 +452,18 @@ function parseStores(){
                   }
                 }
               }
+
+              // Sorting
+              stores[currentStoreSiteId].Products.sort(function(a, b) {
+                return parseFloat(b.APK) - parseFloat(a.APK);
+              });
             }
           }
 
           storesParsed = true;
-          console.log(stores)
-  
+          
+          console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
+
         }else{
           console.log("ERROR: \n" + response.statusCode + "-" + error)
           console.log(response.body)
@@ -519,21 +525,56 @@ function getProductsNeatly(req, res){
   if(processedProductsList == undefined){
     res.sendStatus(204)
   }else{
-
+    
+    let store = (req.query.store)
     let category = (req.query.category)
     let postsPerPage = Number(req.query.postsPerPage);
     let pageIndex = Number(req.query.pageIndex);
     let search = req.query.search
     let selectedArray = processedProductsList;
 
+    let validStore = false;
+
+
+    if(stores != undefined){
+
+      if(stores[store] == undefined){
+        selectedArray = []
+        validStore = false;
+      }else{
+        validStore = true;
+        selectedArray = stores[store].Products
+      }
+
+    }
+
     // Selecting category
     if(category != undefined){
-      selectedArray = categoryList[category.toLowerCase()]
 
-      // If category is invalid -> Return empty array
-      if(selectedArray == undefined){
-        res.json([]);
-        return;
+      // Certain category in certain store
+      if(validStore){
+
+        // Getting the stores products
+        selectedArray = [];
+        
+        for(let productIndex = 0; productIndex < stores[store].Products.length; productIndex++){
+          let currentProductsCategory = stores[store].Products[productIndex].Category
+
+          if(currentProductsCategory == category){
+            selectedArray.push(stores[store].Products[productIndex])
+          }
+        }  
+
+      // Non special store
+      }else{
+
+        selectedArray = categoryList[category.toLowerCase()]
+
+        // If category is invalid -> Return empty array
+        if(selectedArray == undefined){
+          res.json([]);
+          return;
+        }
       }
     }
 
@@ -576,6 +617,9 @@ function getProductsNeatly(req, res){
     console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
     */
+
+
+    console.log("selectedArray.length="+selectedArray.length)
     res.json(selectedArray)
     return;
   }
