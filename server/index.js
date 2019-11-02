@@ -18,7 +18,6 @@ let APIHeaders = {
   "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
  };
 
-
 let lastParseDate = new Date()
 let startedParseDate = new Date()
 
@@ -539,8 +538,14 @@ function getProductsNeatly(req, res){
     if(stores != undefined){
 
       if(stores[store] == undefined){
+        
+        // Invalid store --> return []
         selectedArray = []
         validStore = false;
+        
+        res.json([]);
+        return;
+        
       }else{
         validStore = true;
         selectedArray = stores[store].Products
