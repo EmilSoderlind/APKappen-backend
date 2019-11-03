@@ -491,7 +491,6 @@ function parseStores(){
             }
           } 
           
-          console.log(storesSlim['0205'])
           storesParsed = true;
           
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
@@ -596,8 +595,6 @@ function getProductsNeatly(req, res){
         // Getting the stores products
         selectedArray = [];
 
-        console.log("Stores Products.length: " + stores[store].Products.length)
-
         if(stores[store].Products == undefined){
           console.log(stores[store])
         }
@@ -675,7 +672,6 @@ function getProductsNeatly(req, res){
     console.log("Search: " + search)
     */
 
-    console.log("Stores Products.length: " + stores[store].Products.length)
     res.json(selectedArray)
     return;
   }
@@ -767,6 +763,21 @@ function provideStatusMonitor(){
     protocol: 'http',
     host: 'localhost',
     path: '/APKappen_v2/products',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v2/stores',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v2/products?store=1443&category=beer&postsPerPage=240&pageIndex=1',
+    port: '1337'
+  }, {
+    protocol: 'http',
+    host: 'localhost',
+    path: '/APKappen_v2/stores?lat=60.33&long=20&numberOfStores=3',
     port: '1337'
   }, {
     protocol: 'http',
