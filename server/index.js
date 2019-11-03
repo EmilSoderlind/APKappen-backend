@@ -3,6 +3,7 @@ let fs = require('fs')
 let slugify = require('slugify')
 let marked = require('marked')
 let schedule = require('node-schedule');
+const geolib = require('geolib');
 
 const express = require('express')
 const app = express()
@@ -307,9 +308,11 @@ function resetProductArrays(){
 // Called to update all products
 function reparseSystembolagetAPI(){
   console.log("Reparsing Systembolagets API")
-  parseStores()
+
   parseProducts()
+
   //updateDynamicDns()
+
   lastParseDate = new Date()
 }
 
@@ -351,6 +354,38 @@ function searchProductArray(arrayToSearch,searchString){
   return searchResult;
 }
 
+// Returns n nearest Systembolaget stores given long/lat
+function getNearestStores(numberOfStores, lat, long){
+
+  let nearbyStores = stores;
+
+  nearbyStores = nearbyStores.sort(function(a, b) {
+
+    let distanceToStoreA = geolib.getDistance(
+      { latitude: a.Position.Lat, longitude: a.Position.Long },
+      { latitude: lat, longitude: long },1
+    );
+
+    let distanceToStoreB = geolib.getDistance(
+      { latitude: b.Position.Lat, longitude: b.Position.Long },
+      { latitude: lat, longitude: long },1
+    );
+
+    return distanceToStoreA - distanceToStoreB;
+  });
+
+  nearbyStores = nearbyStores.slice(0,numberOfStores)
+
+  for(let i = 0; i < nearbyStores.length; i++){
+
+    nearbyStores[i].ProductsIdList = undefined;
+    nearbyStores[i].Products = undefined;
+
+  }
+
+  return nearbyStores
+}
+
 function parseStores(){
 
   let beforeStoreParse = new Date();
@@ -364,28 +399,6 @@ function parseStores(){
 
       parsedStores = JSON.parse(body)
 
-      /*
-      OpeninHours: {{}}
-      IsTastingStore: false,
-      SiteId: '0102',
-      Alias: 'Fältöversten',
-      Address: 'Karlaplan 13',
-      DisplayName: null,
-      PostalCode: '115 20',
-      City: 'Stockholm',
-      County: 'Stockholms län',
-      Country: null,
-      IsStore: true,
-      IsAgent: false,
-      IsActiveForAgentOrder: false,
-      Phone: '08-662 22 89',
-      Email: null,
-      Services: null,
-      Depot: null,
-      Name: 'Fältöversten',
-      Position: { Long: 18.09087976878224, Lat: 59.3388103109104 }
-      */
-
       // Get products in stores
       request({ url: productsWithStoreAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
 
@@ -393,17 +406,6 @@ function parseStores(){
     
           productsWithStore = JSON.parse(body)
 
-          /*
-          {
-          SiteId: '0102',
-          Products: [
-            { ProductId: '11261', ProductNumber: '1236601' },
-            { ProductId: '1008061', ProductNumber: '7570701' },
-            { ProductId: '24397590', ProductNumber: '9012301' },
-            { ProductId: '17049', ProductNumber: '2267901' },
-              ...
-          */  
-          
           // For each store - currentSiteId
           for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
 
@@ -457,7 +459,14 @@ function parseStores(){
                 return parseFloat(b.APK) - parseFloat(a.APK);
               });
             }
-          }
+
+            if(currentStore.Position != undefined){
+              if(currentStore.Position.Long == 0 || currentStore.Position.Lat == 0){
+                console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County)
+                console.log("Pos: " + JSON.stringify(currentStore.Position) + "\n")
+              }
+           }
+          } 
 
           storesParsed = true;
           
@@ -511,6 +520,8 @@ function parseProducts(){
 
       createCategoryLists(processedProductsList);
 
+      parseStores()
+
     }else{
       console.log("ERROR: \n" + response.statusCode + "-" + error)
       console.log(response.body)
@@ -522,6 +533,7 @@ function parseProducts(){
 function getProductsNeatly(req, res){
 
   if(processedProductsList == undefined){
+    console.log("processedProductsList == undefinded")
     res.sendStatus(204)
   }else{
     
@@ -534,8 +546,9 @@ function getProductsNeatly(req, res){
 
     let validStore = false;
 
+    console.log("Store: " + store)
 
-    if(stores != undefined){
+    if(store != undefined){
 
       if(stores[store] == undefined){
         
@@ -543,6 +556,7 @@ function getProductsNeatly(req, res){
         selectedArray = []
         validStore = false;
         
+        console.log("Invalid SiteId")
         res.json([]);
         return;
         
@@ -685,45 +699,22 @@ function openEndPoints(){
   })
 
   // Main request endpoint
-  app.get('/APKappen_v1', (req, res) => {
+  app.get('/APKappen_v2/products', (req, res) => {
     getProductsNeatly(req,res)
   })
 
-  // Return all articles with :category
-  // TO BE REMOVED
-  app.get('/APKappen_v1/category/:selectedCategory', (req, res) => {
-    if(processedProductsList == undefined){
-      res.sendStatus(204)
-    }else{
-      let start = new Date()
-      let selectedCategory = req.params.selectedCategory
-      res.json(categoryList[selectedCategory])
-      console.info('Response time: %dms', new Date() - start)
-    }
-  })
+  // Returns 
+  app.get('/APKappen_v2/stores', (req, res) => {
 
-  // Return all articles with :category top :numberOfArticles
-  // TO BE REMOVED
-  app.get('/APKappen_v1/category/:selectedCategory/:numberOfArticles', (req, res) => {
-    if(processedProductsList == undefined){
-      res.sendStatus(204)
-    }else{
-      let start = new Date()
-      let selectedCategory = req.params.selectedCategory
-      res.json(categoryList[selectedCategory].slice(0, req.params.numberOfArticles))
-      console.info('Response time: %dms', new Date() - start)
-    }
-  })
+    let numberOfStores = Number(req.query.numberOfStores)
+    let lat = Number(req.query.lat)
+    let long = Number(req.query.long)
 
-  // Return top :numberOfArticles
-  // TO BE REMOVED
-  app.get('/APKappen_v1/:numberOfArticles', (req, res) => {
-    if(processedProductsList == undefined){
-      res.sendStatus(204)
+    if(isFloat(lat) && isFloat(long)){
+      res.json(getNearestStores(numberOfStores,lat,long))
     }else{
-      let start = new Date()
-      res.json(processedProductsList.slice(0, req.params.numberOfArticles))
-      console.info('#articles: '+ req.params.numberOfArticles +' | Response time: %dms', new Date() - start)
+      console.log("numberOfStores: " + numberOfStores + " lat/long: " + lat + "/" + long)
+      res.json([]);
     }
 
   })
@@ -740,17 +731,17 @@ function provideStatusMonitor(){
   healthChecks: [{
     protocol: 'http',
     host: 'localhost',
-    path: '/APKappen_v1?category=beer_sa&postsPerPage=1&pageIndex=10',
+    path: '/APKappen_v2/products?category=beer_sa&postsPerPage=1&pageIndex=10',
     port: '1337'
   }, {
     protocol: 'http',
     host: 'localhost',
-    path: '/APKappen_v1',
+    path: '/APKappen_v2/products',
     port: '1337'
   }, {
     protocol: 'http',
     host: 'localhost',
-    path: '/APKappen_v1?category=wine_sa',
+    path: '/APKappen_v2/products?category=wine_sa',
     port: '1337'
   }, {
     protocol: 'http',
