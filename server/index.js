@@ -357,30 +357,41 @@ function searchProductArray(arrayToSearch,searchString){
 // Returns n nearest Systembolaget stores given long/lat
 function getNearestStores(numberOfStores, lat, long){
 
-  let nearbyStores = stores;
+  let nearbyStores = []
 
-  nearbyStores = nearbyStores.sort(function(a, b) {
+  for (var key in stores) {
+    // check if the property/key is defined in the object itself, not in parent
+    if (stores.hasOwnProperty(key)) {           
 
-    let distanceToStoreA = geolib.getDistance(
-      { latitude: a.Position.Lat, longitude: a.Position.Long },
-      { latitude: lat, longitude: long },1
-    );
+      if(stores[key].Address != null){
 
-    let distanceToStoreB = geolib.getDistance(
-      { latitude: b.Position.Lat, longitude: b.Position.Long },
-      { latitude: lat, longitude: long },1
-    );
+        let tempStore = stores[key]
+        tempStore.ProductsIdList = undefined;
+        tempStore.Products = undefined
 
-    return distanceToStoreA - distanceToStoreB;
-  });
+        nearbyStores.push(tempStore)
+      } 
+    }
+  }
+  
+  if(!isNaN(lat) || !isNaN(long)){
+    nearbyStores = nearbyStores.sort(function(a, b) {
+      let distanceToStoreA = geolib.getDistance(
+        { latitude: a.Position.Lat, longitude: a.Position.Long },
+        { latitude: lat, longitude: long },1
+      );
+      let distanceToStoreB = geolib.getDistance(
+        { latitude: b.Position.Lat, longitude: b.Position.Long },
+        { latitude: lat, longitude: long },1
+      );
+  
+      return distanceToStoreA - distanceToStoreB;
+    });
+  }
 
-  nearbyStores = nearbyStores.slice(0,numberOfStores)
-
-  for(let i = 0; i < nearbyStores.length; i++){
-
-    nearbyStores[i].ProductsIdList = undefined;
-    nearbyStores[i].Products = undefined;
-
+  // Return first numberOfStores stores if provided
+  if(isInteger(numberOfStores)){
+    nearbyStores = nearbyStores.slice(0,numberOfStores)
   }
 
   return nearbyStores
@@ -428,9 +439,10 @@ function parseStores(){
             let currentStore = parsedStores[storeIndex]
             let currentStoreSiteId = currentStore.SiteId;
 
+
             // Filtering out non-stores
             if(currentStore.IsStore){
-    
+
               stores[currentStoreSiteId] = parsedStores[storeIndex];
               stores[currentStoreSiteId].Products = [];
 
@@ -462,16 +474,17 @@ function parseStores(){
 
             if(currentStore.Position != undefined){
               if(currentStore.Position.Long == 0 || currentStore.Position.Lat == 0){
+                console.log("\nStore missing GPS position:")
                 console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County)
-                console.log("Pos: " + JSON.stringify(currentStore.Position) + "\n")
+                console.log("Pos: " + JSON.stringify(currentStore.Position))
               }
-           }
+            }
           } 
-
+          
           storesParsed = true;
           
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
-
+          
         }else{
           console.log("ERROR: \n" + response.statusCode + "-" + error)
           console.log(response.body)
@@ -533,7 +546,6 @@ function parseProducts(){
 function getProductsNeatly(req, res){
 
   if(processedProductsList == undefined){
-    console.log("processedProductsList == undefinded")
     res.sendStatus(204)
   }else{
     
@@ -546,8 +558,6 @@ function getProductsNeatly(req, res){
 
     let validStore = false;
 
-    console.log("Store: " + store)
-
     if(store != undefined){
 
       if(stores[store] == undefined){
@@ -556,7 +566,6 @@ function getProductsNeatly(req, res){
         selectedArray = []
         validStore = false;
         
-        console.log("Invalid SiteId")
         res.json([]);
         return;
         
@@ -637,7 +646,6 @@ function getProductsNeatly(req, res){
     console.log("Search: " + search)
     */
 
-
     console.log("selectedArray.length="+selectedArray.length)
     res.json(selectedArray)
     return;
@@ -710,17 +718,10 @@ function openEndPoints(){
     let lat = Number(req.query.lat)
     let long = Number(req.query.long)
 
-    if(isFloat(lat) && isFloat(long)){
-      res.json(getNearestStores(numberOfStores,lat,long))
-    }else{
-      console.log("numberOfStores: " + numberOfStores + " lat/long: " + lat + "/" + long)
-      res.json([]);
-    }
-
+    res.json(getNearestStores(numberOfStores,lat,long))
   })
 
   app.listen(port, () => console.log(`Listening on port ${port}!\n`))
-
 
   // Endpoint for express-status-monitor
   provideStatusMonitor()
