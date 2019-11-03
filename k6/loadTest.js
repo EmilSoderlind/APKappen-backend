@@ -60,7 +60,7 @@ export default function() {
   var localURL = "http://localhost"
   var hostedURL = "http://skruvdragarn.duckdns.org"
 
-  var queryURL = localURL + ":1337/APKappen_v1?category="+randomCategory+"\&postsPerPage="+postsPerPage+"\&pageIndex=" + pageIndex;
+  var queryURL = localURL + ":1337/APKappen_v2/products?category="+randomCategory+"\&postsPerPage="+postsPerPage+"\&pageIndex=" + pageIndex;
 
   //console.log(queryURL)
   let response = http.get(queryURL);
