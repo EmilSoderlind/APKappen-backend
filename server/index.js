@@ -24,11 +24,8 @@ let startedParseDate = new Date()
 
 let processedProductsList = "";
 
-let storesParsed = false;
-
 let stores = [];
-
-// Without its products/productId
+// Stores without its products/productId
 let storesSlim = [];
 
 let categoryList = {
@@ -444,6 +441,7 @@ function parseStores(){
             // Filtering out non-stores
             if(currentStore.IsStore){
 
+              // Used when returning stores. To minimize the JSON-size we remove some shit-attributes in that case
               storesSlim[currentStoreSiteId] = JSON.parse(JSON.stringify(parsedStores[storeIndex]));
               delete storesSlim[currentStoreSiteId].ProductsIdList
               delete storesSlim[currentStoreSiteId].Products
@@ -468,9 +466,7 @@ function parseStores(){
                   let currentParsedProduct = categoryList.all[parsedProductsIndex];
 
                   if(currentParsedProduct.ProductId == currentProductInStoreProductId){
-                    
                     stores[currentStoreSiteId].Products.push(currentParsedProduct)
-                    
                     break;
                   }
                 }
@@ -492,7 +488,6 @@ function parseStores(){
           } 
           
           storesParsed = true;
-          
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
           
         }else{
@@ -678,17 +673,7 @@ function getProductsNeatly(req, res){
 }
 
 function openEndPoints(){
-  // HTML endpoint with top 500 from ARRAY
-  app.get('/dump', (req, res) => {
-    res.set('Content-Type', 'text/html');
-    let listHtml = "<!DOCTYPE html><html lang=\"en\"><head><title>APK DUMP</title><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><link rel=\"stylesheet\" href=\"https:\/\/maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css\"><script src=\"https:\//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js\"></script><script src=\"https:\//maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js\"></script></head><body>";
-    for(let i = 0; i<18000; i++){ //TODO 18000 som magic number? använd nån längd av nått
-      let prod = processedProductsList[i];
-      listHtml = listHtml + "<li class=\"list-group-item\">"+ (i+1) +". "+ prod.ProductNameBold +" " + prod.APKScore + " APK-Score (1-100)  <a href="+addURLtoProduct(prod)+">"+addURLtoProduct(prod)+"</a></li>"
-    }
-    res.send('<div class=\"container\"><h2>TOP APK</h2><ul class=\"list-group\">' + listHtml + '</ul></div></body></html>');
-  })
-
+  
   app.get('/lastParse', (req, res) => {
     res.send(lastParseDate);
   })
@@ -731,12 +716,12 @@ function openEndPoints(){
     res.send(marked(file.toString()));
   })
 
-  // Main request endpoint
+  // Endpoint for products
   app.get('/APKappen_v2/products', (req, res) => {
     getProductsNeatly(req,res)
   })
 
-  // Returns 
+  // Endpoint for stores
   app.get('/APKappen_v2/stores', (req, res) => {
 
     let numberOfStores = Number(req.query.numberOfStores)
