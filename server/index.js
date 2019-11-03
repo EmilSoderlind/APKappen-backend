@@ -28,6 +28,9 @@ let storesParsed = false;
 
 let stores = [];
 
+// Without its products/productId
+let storesSlim = [];
+
 let categoryList = {
   "red_wine": new Array(),
   "cider_and_mixed_drink": new Array(),
@@ -359,15 +362,13 @@ function getNearestStores(numberOfStores, lat, long){
 
   let nearbyStores = []
 
-  for (var key in stores) {
+  for (var key in storesSlim) {
     // check if the property/key is defined in the object itself, not in parent
     if (stores.hasOwnProperty(key)) {           
 
-      if(stores[key].Address != null){
+      if(storesSlim[key].Address != null){
 
-        let tempStore = stores[key]
-        tempStore.ProductsIdList = undefined;
-        tempStore.Products = undefined
+        let tempStore = storesSlim[key]
 
         nearbyStores.push(tempStore)
       } 
@@ -443,6 +444,15 @@ function parseStores(){
             // Filtering out non-stores
             if(currentStore.IsStore){
 
+              storesSlim[currentStoreSiteId] = JSON.parse(JSON.stringify(parsedStores[storeIndex]));
+              delete storesSlim[currentStoreSiteId].ProductsIdList
+              delete storesSlim[currentStoreSiteId].Products
+              delete storesSlim[currentStoreSiteId].IsStore
+              delete storesSlim[currentStoreSiteId].Email
+              delete storesSlim[currentStoreSiteId].Services
+              delete storesSlim[currentStoreSiteId].Depot
+              delete storesSlim[currentStoreSiteId].IsAgent
+
               stores[currentStoreSiteId] = parsedStores[storeIndex];
               stores[currentStoreSiteId].Products = [];
 
@@ -481,6 +491,7 @@ function parseStores(){
             }
           } 
           
+          console.log(storesSlim['0205'])
           storesParsed = true;
           
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
@@ -571,7 +582,7 @@ function getProductsNeatly(req, res){
         
       }else{
         validStore = true;
-        selectedArray = stores[store].Products
+        //selectedArray = stores[store].Products
       }
 
     }
@@ -584,6 +595,12 @@ function getProductsNeatly(req, res){
 
         // Getting the stores products
         selectedArray = [];
+
+        console.log("Stores Products.length: " + stores[store].Products.length)
+
+        if(stores[store].Products == undefined){
+          console.log(stores[store])
+        }
         
         for(let productIndex = 0; productIndex < stores[store].Products.length; productIndex++){
           let currentProductsCategory = stores[store].Products[productIndex].Category
@@ -602,7 +619,6 @@ function getProductsNeatly(req, res){
               selectedArray.push(stores[store].Products[productIndex])
 
             }
-
           }
         }  
 
@@ -659,6 +675,7 @@ function getProductsNeatly(req, res){
     console.log("Search: " + search)
     */
 
+    console.log("Stores Products.length: " + stores[store].Products.length)
     res.json(selectedArray)
     return;
   }
