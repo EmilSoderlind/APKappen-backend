@@ -589,7 +589,20 @@ function getProductsNeatly(req, res){
           let currentProductsCategory = stores[store].Products[productIndex].Category
 
           if(currentProductsCategory == category){
+            // Perfect match enteret-category and products
             selectedArray.push(stores[store].Products[productIndex])
+          
+
+          }else if(category == 'wine'){
+
+            // Wine contains all 4 wine categories
+            if(currentProductsCategory == 'red_wine' || currentProductsCategory == 'white_wine' || 
+            currentProductsCategory == 'sparkling_wine' || currentProductsCategory == 'rose_wine'){
+
+              selectedArray.push(stores[store].Products[productIndex])
+
+            }
+
           }
         }  
 
@@ -646,7 +659,6 @@ function getProductsNeatly(req, res){
     console.log("Search: " + search)
     */
 
-    console.log("selectedArray.length="+selectedArray.length)
     res.json(selectedArray)
     return;
   }
