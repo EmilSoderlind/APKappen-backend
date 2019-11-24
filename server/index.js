@@ -590,8 +590,10 @@ function getProductsNeatly(req, res){
 
     let validStore = false;
 
+    // Store-query is provided 
     if(store != undefined){
 
+      // Check if correct store-siteId
       if(stores[store] == undefined){
         
         // Invalid store --> return []
@@ -603,26 +605,24 @@ function getProductsNeatly(req, res){
         validStore = true;
         selectedArray = stores[store].Products
       }
-
     }
 
     // Selecting category
     if(category != undefined){
 
-      // Certain category in certain store
+      // Certain category in _certain store_
       if(validStore){
 
         // Getting the stores products
         selectedArray = [];
 
         if(stores[store].Products == undefined){
+          console.log("stores[store].Products == undefined !")
           console.log(stores[store])
         }
         
         for(let productIndex = 0; productIndex < stores[store].Products.length; productIndex++){
           let currentProductsCategory = stores[store].Products[productIndex].Category
-
-          //console.log("category: " + category);
 
           if(currentProductsCategory == category){
             // Perfect match enteret-category and products
@@ -637,10 +637,13 @@ function getProductsNeatly(req, res){
               selectedArray.push(stores[store].Products[productIndex])
 
             }
+            // category "all" returns everything in store
+          }else if(category == "all"){
+            selectedArray.push(stores[store].Products[productIndex])
           }
         }  
 
-      // Non special store
+      // _Non special store_
       }else{
 
         selectedArray = categoryList[category.toLowerCase()]
@@ -685,6 +688,7 @@ function getProductsNeatly(req, res){
 
       }
     }
+
     /*
     console.log("\nRequest:");
     console.log(new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '') + " GMT")
@@ -692,7 +696,7 @@ function getProductsNeatly(req, res){
     console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
     */
-    console.log("Return length: " + selectedArray.length)
+    
     res.json(selectedArray)
     return;
   }
