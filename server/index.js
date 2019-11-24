@@ -4,6 +4,7 @@ let slugify = require('slugify')
 let marked = require('marked')
 let schedule = require('node-schedule');
 const geolib = require('geolib');
+let https = require('https');
 
 const express = require('express')
 const app = express()
@@ -135,6 +136,25 @@ function createCategoryLists(productList){
   categoryList["wine"] = allWines;
 }
 
+function checkIfURLWorks(product){
+
+
+  let url = JSON.stringify(product.URL)
+
+  request({ url: "https://www.svt.se"}, function (error, response, body) {
+
+    //console.log("product: " + JSON.stringify(product))
+
+    if(response != undefined){
+      console.log("response: " + response.statusCode);
+    }else{
+      console.log("response == undefined")
+    }
+    
+  })
+  
+}
+
 // Create and set .URL attribute in article JSON-objects
 // URL leads to the articles www.systembolaget.se/... page
 function addURLtoProduct(product){
@@ -218,6 +238,10 @@ function processParsedProducts(productList){
     translateSwedishCategories(productList[i])
 
     addURLtoProduct(productList[i])
+
+    // Check if URL works
+    //checkIfURLWorks(productList[i])
+
     addAPKtoProduct(productList[i])
 
     // Max APK to calculate APKScore
@@ -341,8 +365,11 @@ function searchProductArray(arrayToSearch,searchString){
     return searchResult;
   }
 
+  // Searching ProductNameBold + ProductNameThin for 'searchString' --> Appending to resultList
   for (let i = 0; i < arrayToSearch.length; i++) {
       if(((arrayToSearch[i].ProductNameBold).toLowerCase()).includes(searchString.toLowerCase())){
+        searchResult.push(arrayToSearch[i])
+      }else if(arrayToSearch[i].ProductNameThin != null && (((arrayToSearch[i].ProductNameThin).toLowerCase()).includes(searchString.toLowerCase()))){
         searchResult.push(arrayToSearch[i])
       }
   }
@@ -568,15 +595,13 @@ function getProductsNeatly(req, res){
       if(stores[store] == undefined){
         
         // Invalid store --> return []
-        selectedArray = []
-        validStore = false;
-        
+        validStore = false;        
         res.json([]);
         return;
         
       }else{
         validStore = true;
-        //selectedArray = stores[store].Products
+        selectedArray = stores[store].Products
       }
 
     }
@@ -597,10 +622,11 @@ function getProductsNeatly(req, res){
         for(let productIndex = 0; productIndex < stores[store].Products.length; productIndex++){
           let currentProductsCategory = stores[store].Products[productIndex].Category
 
+          //console.log("category: " + category);
+
           if(currentProductsCategory == category){
             // Perfect match enteret-category and products
             selectedArray.push(stores[store].Products[productIndex])
-          
 
           }else if(category == 'wine'){
 
@@ -666,7 +692,7 @@ function getProductsNeatly(req, res){
     console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
     */
-
+    console.log("Return length: " + selectedArray.length)
     res.json(selectedArray)
     return;
   }
