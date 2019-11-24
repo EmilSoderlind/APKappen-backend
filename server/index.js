@@ -138,20 +138,32 @@ function createCategoryLists(productList){
 
 function checkIfURLWorks(product){
 
-
   let url = JSON.stringify(product.URL)
+  
+  if(url != undefined){
 
-  request({ url: "https://www.svt.se"}, function (error, response, body) {
+    //console.log("the url is " + url.slice(1,url.length-1))
 
-    //console.log("product: " + JSON.stringify(product))
+    url = url.replaceAll("\"","");
 
-    if(response != undefined){
-      console.log("response: " + response.statusCode);
-    }else{
-      console.log("response == undefined")
-    }
-    
-  })
+    console.log("url is : " + url)
+
+    request({ url: url}, function (error, response, body) {
+
+      //console.log("product: " + JSON.stringify(product))
+
+      if(response != undefined){
+        console.log("response: " + response);
+      }else{
+        //console.log("response == undefined")
+      }
+      
+    })
+
+  }else{
+    console.log("Product's url is undefined : " + JSON.stringify(product))
+    return false;
+  }
   
 }
 
@@ -463,7 +475,8 @@ function parseStores(){
 
             let currentStore = parsedStores[storeIndex]
             let currentStoreSiteId = currentStore.SiteId;
-
+            
+            console.log("Mapping products for store " + currentSiteId)
 
             // Filtering out non-stores
             if(currentStore.IsStore){
@@ -524,9 +537,9 @@ function parseStores(){
       })
 
     }else{
-      console.log("ERROR: \n" + response.statusCode + "-" + error)
-      console.log(response.body)
-
+      console.log("Error in parsing stores: " + error)
+      //console.log(response.body)
+      //console.log("ERROR: \n" + response.statusCode + "-" + error)
     }
   })
 }
