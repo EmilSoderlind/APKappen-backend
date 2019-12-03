@@ -476,7 +476,7 @@ function parseStores(){
             let currentStore = parsedStores[storeIndex]
             let currentStoreSiteId = currentStore.SiteId;
             
-            console.log("Mapping products for store " + currentSiteId)
+            console.log("Mapping products for store " + currentStoreSiteId)
 
             // Filtering out non-stores
             if(currentStore.IsStore){
@@ -523,8 +523,10 @@ function parseStores(){
                 console.log("\nStore missing GPS position:")
                 console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County)
                 console.log("Pos: " + JSON.stringify(currentStore.Position))
+                delete stores[currentStoreSiteId];
               }
             }
+
           } 
           
           storesParsed = true;
