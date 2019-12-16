@@ -2,41 +2,41 @@
 All returned products is sorted by APK.
 
 ## BaseURL: http://skruvdragarn.duckdns.org
-## PORT: 1337/1338
+## PORT: 1338
 
 ## Endpoint: /APKappen_v2/products
 ### Query options
 Several query parameters can be used simultaneously.
 #### Store (SiteId)
-Get products in a certain store with SiteId. Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/products?store=2299
+Get products in a certain store with SiteId. Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?store=2299
 #### Filter by category
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/products?category=sprit
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?category=sprit
 #### Pagination
 You must provide both postsPerPage AND pageIndex do use pagination.
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/products?postsPerPage=4&pageIndex=333
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?postsPerPage=4&pageIndex=333
 #### Search
 Return products (ProductNameBold/ProductNameThin) that contains the given string.
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/products?search="pripps%20blå"
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?search="pripps%20blå"
 
 ## Endpoint: /APKappen_v2/stores
 ### Query options
 Several query parameters can be used simultaneously.
 #### Get all stores
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/stores
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/stores
 #### Get all stores sorted by distance (Require lat/long) 
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/stores?lat=63.82&long=20.32
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/stores?lat=63.82&long=20.32
 #### Get n nearest stores (Require lat/long)
-Example: http://skruvdragarn.duckdns.org:1337/APKappen_v2/stores?lat=63.82&long=20.32&numberOfStores=3
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/stores?lat=63.82&long=20.32&numberOfStores=3
 
 ### Other  
 #### This documentation page
-http://skruvdragarn.duckdns.org:1337/
+http://skruvdragarn.duckdns.org:1338/
 #### Last parse date
-http://skruvdragarn.duckdns.org:1337/lastParse
+http://skruvdragarn.duckdns.org:1338/lastParse
 #### Names + size of each category
-http://skruvdragarn.duckdns.org:1337/categories
+http://skruvdragarn.duckdns.org:1338/categories
 #### Status of API (Health monitor)
-http://skruvdragarn.duckdns.org:1337/status
+http://skruvdragarn.duckdns.org:1338/status
 
 ## Example product
 ```javascript
