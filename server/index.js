@@ -476,7 +476,7 @@ function parseStores(){
             let currentStore = parsedStores[storeIndex]
             let currentStoreSiteId = currentStore.SiteId;
             
-            console.log("Mapping products for store " + currentStoreSiteId)
+            //console.log("Mapping products for store " + currentStoreSiteId)
 
             // Filtering out non-stores
             if(currentStore.IsStore){
@@ -526,22 +526,21 @@ function parseStores(){
                 delete stores[currentStoreSiteId];
               }
             }
-
           } 
           
           storesParsed = true;
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
           
         }else{
-          console.log("ERROR: \n" + response.statusCode + "-" + error)
+          console.log("Error in parsing products in stores \n" + response.statusCode + "-" + error)
           console.log(response.body)
         }
       })
 
     }else{
       console.log("Error in parsing stores: " + error)
-      //console.log(response.body)
-      //console.log("ERROR: \n" + response.statusCode + "-" + error)
+      console.log("ERROR: \n" + response.statusCode + "-" + error)      
+      console.log(response.body)
     }
   })
 }
@@ -583,7 +582,7 @@ function parseProducts(){
       parseStores()
 
     }else{
-      console.log("ERROR: \n" + response.statusCode + "-" + error)
+      console.log("ERROR in parsing products: \n" + response.statusCode + "-" + error)
       console.log(response.body)
     }
   })
