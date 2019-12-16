@@ -8,9 +8,9 @@ All returned products is sorted by APK.
 ### Query options
 Several query parameters can be used simultaneously.
 #### Store (SiteId)
-Get products in a certain store with SiteId. Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?store=2299
+Get products in a certain store with SiteId. Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?store=1423
 #### Filter by category
-Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?category=sprit
+Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?category=beer
 #### Pagination
 You must provide both postsPerPage AND pageIndex do use pagination.
 Example: http://skruvdragarn.duckdns.org:1338/APKappen_v2/products?postsPerPage=4&pageIndex=333
