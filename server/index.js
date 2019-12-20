@@ -4,7 +4,6 @@ let slugify = require('slugify')
 let marked = require('marked')
 let schedule = require('node-schedule');
 const geolib = require('geolib');
-let https = require('https');
 
 const express = require('express')
 const app = express()
@@ -23,10 +22,10 @@ let APIHeaders = {
 let lastParseDate = new Date()
 let startedParseDate = new Date()
 
-let processedProductsList = "";
-
+// Used to contain stores individual products
 let stores = [];
-// Stores without its products/productId
+
+// Stores without its products/productId (Used to decide closest store baset on GPS)
 let storesSlim = [];
 
 let categoryList = {
@@ -136,6 +135,8 @@ function createCategoryLists(productList){
   categoryList["wine"] = allWines;
 }
 
+
+// TODO to be implemented
 function checkIfURLWorks(product){
 
   let url = JSON.stringify(product.URL)
@@ -243,7 +244,7 @@ function processParsedProducts(productList){
 
     // Removing products that is "IsCompletelyOutOfStock = true"
     if(productList[i].IsCompletelyOutOfStock){
-      productList.splice(i,1);
+      //productList.splice(i,1);
       //console.log("Removed a IsCompletelyOutOfStock=true")
     }
 
@@ -349,7 +350,6 @@ function reparseSystembolagetAPI(){
 
   //updateDynamicDns()
 
-  lastParseDate = new Date()
 }
 
 // Make call to duckdns.org to update dynamic-IP skruvdragarn.duckdns.org
@@ -490,6 +490,7 @@ function parseStores(){
               delete storesSlim[currentStoreSiteId].Services
               delete storesSlim[currentStoreSiteId].Depot
               delete storesSlim[currentStoreSiteId].IsAgent
+              delete storesSlim[currentStoreSiteId].Phone;
 
               stores[currentStoreSiteId] = parsedStores[storeIndex];
               stores[currentStoreSiteId].Products = [];
@@ -517,15 +518,9 @@ function parseStores(){
                 return parseFloat(b.APK) - parseFloat(a.APK);
               });
             }
-
-            if(currentStore.Position != undefined){
-              if(currentStore.Position.Long == 0 || currentStore.Position.Lat == 0){
-                console.log("\nStore missing GPS position:")
-                console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County)
-                console.log("Pos: " + JSON.stringify(currentStore.Position))
-                delete stores[currentStoreSiteId];
-              }
-            }
+            
+            // Removing stores with long/lat = 0
+            removeStoresWithoutGPS(currentStore, currentStoreSiteId);
           } 
           
           storesParsed = true;
@@ -544,6 +539,32 @@ function parseStores(){
     }
   })
 }
+
+function removeStoresWithoutGPS(currentStore, currentStoreSiteId) {
+  if (currentStore.Position != undefined) {
+    if (currentStore.Position.Long == 0 || currentStore.Position.Lat == 0) {
+      console.log("\nStore missing GPS position:");
+      console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County);
+      console.log("Pos: " + JSON.stringify(currentStore.Position));
+      delete stores[currentStoreSiteId];
+    }
+  }
+}
+
+// Checking product list for 404 on URL
+function searchForBrokenProductLinks(productList){
+  console.log("searchForBrokenProductLinks")
+  
+  for (var category in categoryList.keys){
+
+    console.log("cat: " + category)
+  
+  }
+
+  console.log("searchForBrokenProductLinks - DONE")
+}
+
+
 
 function parseProducts(){
 
@@ -575,11 +596,13 @@ function parseProducts(){
       console.info('Processing + sorting time: %dms', new Date() - beforeProcessAndSortDate)
       console.log("Antal produkter: " + Object.keys(parsedProducts).length)
 
-      processedProductsList = parsedProducts;
-
-      createCategoryLists(processedProductsList);
-
+      createCategoryLists(parsedProducts);
       parseStores()
+
+      console.log("Parsed products, now searching for broken URLs in categoryList")
+      searchForBrokenProductLinks()
+
+      lastParseDate = new Date()
 
     }else{
       console.log("ERROR in parsing products: \n" + response.statusCode + "-" + error)
@@ -588,19 +611,16 @@ function parseProducts(){
   })
 }
 
-// category == null (ALL)
+
 function getProductsNeatly(req, res){
 
-  if(processedProductsList == undefined){
+  if(categoryList.all == undefined){
     res.sendStatus(204)
   }else{
     
-    let store = (req.query.store)
-    let category = (req.query.category)
-    let postsPerPage = Number(req.query.postsPerPage);
-    let pageIndex = Number(req.query.pageIndex);
-    let search = req.query.search
-    let selectedArray = processedProductsList;
+    let { store, category, search, postsPerPage, pageIndex } = getQueryParameters(req);
+    
+    let selectedArray; // Array to be returned
 
     let validStore = false;
 
@@ -614,7 +634,7 @@ function getProductsNeatly(req, res){
         validStore = false;        
         res.json([]);
         return;
-        
+
       }else{
         validStore = true;
         selectedArray = stores[store].Products
@@ -628,37 +648,9 @@ function getProductsNeatly(req, res){
       if(validStore){
 
         // Getting the stores products
-        selectedArray = [];
+        selectedArray = getCategoryFromStore(selectedArray, store, category);  
 
-        if(stores[store].Products == undefined){
-          console.log("stores[store].Products == undefined !")
-          console.log(stores[store])
-        }
-        
-        for(let productIndex = 0; productIndex < stores[store].Products.length; productIndex++){
-          let currentProductsCategory = stores[store].Products[productIndex].Category
-
-          if(currentProductsCategory == category){
-            // Perfect match enteret-category and products
-            selectedArray.push(stores[store].Products[productIndex])
-
-          }else if(category == 'wine'){
-
-            // Wine contains all 4 wine categories
-            if(currentProductsCategory == 'red_wine' || currentProductsCategory == 'white_wine' || 
-            currentProductsCategory == 'sparkling_wine' || currentProductsCategory == 'rose_wine'){
-
-              selectedArray.push(stores[store].Products[productIndex])
-
-            }
-            // category "all" returns everything in store
-          }else if(category == "all"){
-            selectedArray.push(stores[store].Products[productIndex])
-          }
-        }  
-
-      // _Non special store_
-      }else{
+      }else{ // No store selected
 
         selectedArray = categoryList[category.toLowerCase()]
 
@@ -671,37 +663,10 @@ function getProductsNeatly(req, res){
     }
 
     // Filter by search-string
-    if(search != undefined){
-      selectedArray = searchProductArray(selectedArray,search.replaceAll("\"",""));
-    }
+    selectedArray = searchSelectedArray(search, selectedArray);
 
     // Pagination
-    if(isInteger(postsPerPage) && isInteger(pageIndex)){
-      var startSliceIndex = (pageIndex*postsPerPage);
-      var endSliceIndex = (pageIndex*postsPerPage)+(postsPerPage);
-
-      if(postsPerPage == 0){
-        // Requesting 0 posts per page --> Empty array
-        selectedArray = [];
-      }else if(startSliceIndex == endSliceIndex){
-        // request selecting 1 product
-        selectedArray = selectedArray[startSliceIndex]
-      }else{
-
-        // If we are requesting a index outside category-array
-        if(selectedArray.length < endSliceIndex){
-          endSliceIndex = selectedArray.length;
-        }
-
-        // If we are requesting a index outside category-array
-        if(selectedArray.length < startSliceIndex){
-          selectedArray = []
-        }else{
-          selectedArray = selectedArray.slice(startSliceIndex,endSliceIndex)
-        }
-
-      }
-    }
+    selectedArray = paginateSelectedArray(postsPerPage, pageIndex, selectedArray);
 
     /*
     console.log("\nRequest:");
@@ -714,6 +679,79 @@ function getProductsNeatly(req, res){
     res.json(selectedArray)
     return;
   }
+}
+
+function getQueryParameters(req) {
+  let store = (req.query.store);
+  let category = (req.query.category);
+  let postsPerPage = Number(req.query.postsPerPage);
+  let pageIndex = Number(req.query.pageIndex);
+  let search = req.query.search;
+  return { store, category, search, postsPerPage, pageIndex };
+}
+
+// filtering stores products by category
+function getCategoryFromStore(selectedArray, store, category) {
+  selectedArray = [];
+  if (stores[store].Products == undefined) {
+    console.log("stores[store].Products == undefined !");
+    console.log(stores[store]);
+  }
+  for (let productIndex = 0; productIndex < stores[store].Products.length; productIndex++) {
+    let currentProductsCategory = stores[store].Products[productIndex].Category;
+    if (currentProductsCategory == category) {
+      // Perfect match enteret-category and products
+      selectedArray.push(stores[store].Products[productIndex]);
+    }
+    else if (category == 'wine') {
+      // Wine contains all 4 wine categories
+      if (currentProductsCategory == 'red_wine' || currentProductsCategory == 'white_wine' ||
+        currentProductsCategory == 'sparkling_wine' || currentProductsCategory == 'rose_wine') {
+        selectedArray.push(stores[store].Products[productIndex]);
+      }
+      // category "all" returns everything in store
+    }
+    else if (category == "all") {
+      selectedArray.push(stores[store].Products[productIndex]);
+    }
+  }
+  return selectedArray;
+}
+
+function searchSelectedArray(search, selectedArray) {
+  if (search != undefined) {
+    selectedArray = searchProductArray(selectedArray, search.replaceAll("\"", ""));
+  }
+  return selectedArray;
+}
+
+function paginateSelectedArray(postsPerPage, pageIndex, selectedArray) {
+  if (isInteger(postsPerPage) && isInteger(pageIndex)) {
+    var startSliceIndex = (pageIndex * postsPerPage);
+    var endSliceIndex = (pageIndex * postsPerPage) + (postsPerPage);
+    if (postsPerPage == 0) {
+      // Requesting 0 posts per page --> Empty array
+      selectedArray = [];
+    }
+    else if (startSliceIndex == endSliceIndex) {
+      // request selecting 1 product
+      selectedArray = selectedArray[startSliceIndex];
+    }
+    else {
+      // If we are requesting a index outside category-array
+      if (selectedArray.length < endSliceIndex) {
+        endSliceIndex = selectedArray.length;
+      }
+      // If we are requesting a index outside category-array
+      if (selectedArray.length < startSliceIndex) {
+        selectedArray = [];
+      }
+      else {
+        selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
+      }
+    }
+  }
+  return selectedArray;
 }
 
 function openEndPoints(){
