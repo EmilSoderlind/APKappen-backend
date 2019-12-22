@@ -619,13 +619,15 @@ function removeBrokenProductInCategoryList(ProductIdToRemove) {
 
 }
 
+
+// Variables for removing products with broken URLS
 let productsChecked = 0;
 
-let maxNumberOfConnections = 31; // With 70 it broke
+let maxNumberOfConnections = 35; // With 70 it broke
 let numberOfConnections = 0;
 
 let categoriesToParse = []
-let categoryIndex = 19;
+let categoryIndex = 0;
 
 let currentProductToCheckInCategoryIndex = 0;
 
@@ -647,6 +649,7 @@ function mainCool() {
     if (numberOfConnections <= maxNumberOfConnections) { // Test a new URL
       //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
 
+
       let currentProduct;
 
       if (doingTryAgainProducts) {
@@ -656,89 +659,87 @@ function mainCool() {
         currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
       }
 
-      if (currentProduct == undefined) { // odd special case
+      if (currentProduct != undefined) { // Only do request if currentProduct is defined
 
-        console.log("currentProduct == undefined -> return;")
-        return;
+        let currentProductURL = currentProduct.URL;
 
-      }
-
-      let currentProductURL = currentProduct.URL;
-
-      //console.log("currentProductURL: " + currentProductURL)
-      numberOfConnections++;
-      request({
-        url: currentProductURL
-      }, function (error, response, body) {
-
-        numberOfConnections--;
-
-        if (!doneWithTryAgainProducts) {
-          console.log(categoriesToParse[categoryIndex] + "(" + currentProductToCheckInCategoryIndex + ")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked / totalURLsToCheck) * 100)).toFixed(2) + " %")
-        }
-
-        // Switch category (Reached last index of category)
-        if (!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length) {
-
-          console.log("Done with " + categoriesToParse[categoryIndex])
-          categoryIndex++;
-          currentProductToCheckInCategoryIndex = 0;
-
-          if (categoryIndex == categoriesToParse.length) {
-            console.log("DONE with ALL categories!")
-            doingTryAgainProducts = true;
-
-            if (tryAgainProducts.length == 0) {
-              doneWithTryAgainProducts = true;
-            }
-
-          }
-
-        } else if (doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length) { // Reached end of tryAgainProducts
-
-          if (doneWithTryAgainProducts == false) {
-
-            doneWithTryAgainProducts = true;
-            console.log("Doing remove work!")
-
-            for (let toBeRemoveID in toBeRemovedProducts) {
-              removeBrokenProductInCategoryList(toBeRemovedProducts.pop().ProductId)
-            }
-
-
-            return;
-
-          } else {
-            console.log("-")
-            return;
-          }
-
-        }
-
-        currentProductToCheckInCategoryIndex++;
-        productsChecked++;
-
-        if (!error && response.statusCode == 404) { // Invalid URL
-          toBeRemovedProducts.push(currentProduct);
-        } else if (!error && response.statusCode == 200) { // Correct URL
-
-        } else { // non - 200/404 error when requesting URL
-
-          console.log("Error on " + currentProduct.URL)
-          if (response != undefined) {
-            console.log("code: " + response.statusCode)
-          } else {
-            console.log("response == undefined !")
-          }
-          // TODO check for 500s and incorrect URLS by us
-          tryAgainProducts.push(currentProduct)
-
-        }
+        //console.log("currentProductURL: " + currentProductURL)
+        numberOfConnections++;
 
         mainCool()
 
-      })
+        request({
+          url: currentProductURL
+        }, function (error, response, body) {
 
+          numberOfConnections--;
+
+          if (!doneWithTryAgainProducts) {
+            console.log(categoriesToParse[categoryIndex] + "(" + currentProductToCheckInCategoryIndex + ")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked / totalURLsToCheck) * 100)).toFixed(2) + " %")
+          }
+
+          // Switch category (Reached last index of category)
+          if (!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length) {
+
+            console.log("Done with " + categoriesToParse[categoryIndex])
+            mainCool()
+            categoryIndex++;
+            currentProductToCheckInCategoryIndex = 0;
+
+            if (categoryIndex == categoriesToParse.length) {
+              console.log("DONE with ALL categories!")
+              doingTryAgainProducts = true;
+
+              if (tryAgainProducts.length == 0) {
+                doneWithTryAgainProducts = true;
+              }
+
+            }
+
+          } else if (doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length) { // Reached end of tryAgainProducts
+
+            if (doneWithTryAgainProducts == false) {
+
+              doneWithTryAgainProducts = true;
+              console.log("Doing remove work!")
+
+              for (let toBeRemoveID in toBeRemovedProducts) {
+                removeBrokenProductInCategoryList(toBeRemovedProducts.pop().ProductId)
+              }
+
+              return;
+
+            } else {
+              console.log("-")
+              return;
+            }
+
+          }
+
+          currentProductToCheckInCategoryIndex++;
+          productsChecked++;
+
+          if (!error && response.statusCode == 404) { // Invalid URL
+            toBeRemovedProducts.push(currentProduct);
+          } else if (!error && response.statusCode == 200) { // Correct URL
+
+          } else { // non - 200/404 error when requesting URL
+
+            console.log("Error on " + currentProduct.URL)
+            if (response != undefined) {
+              console.log("code: " + response.statusCode)
+            } else {
+              console.log("response == undefined !")
+            }
+            // TODO check for 500s and incorrect URLS by us
+            tryAgainProducts.push(currentProduct)
+
+          }
+
+          mainCool()
+
+        })
+      }
     }
   }
 }
@@ -821,7 +822,10 @@ function parseProducts() {
       console.log("parseProducts() - DONE")
     } else {
 
-      console.log("ERROR in parsing products: \n" + response.statusCode + "-" + error)
+
+
+      console.log("ERROR in parsing products: " + error)
+      console.log("Status code: " + response.statusCode)
       console.log(response.body)
 
       if (response.statusCode == 429) {
@@ -896,7 +900,29 @@ function getProductsNeatly(req, res) {
     selectedArray = searchSelectedArray(search, selectedArray);
 
     // Pagination
-    selectedArray = paginateSelectedArray(postsPerPage, pageIndex, selectedArray);
+    //selectedArray = paginateSelectedArray(postsPerPage, pageIndex, selectedArray);
+    if (isInteger(postsPerPage) && isInteger(pageIndex)) {
+      var startSliceIndex = (pageIndex * postsPerPage);
+      var endSliceIndex = (pageIndex * postsPerPage) + (postsPerPage);
+      if (postsPerPage == 0) {
+        // Requesting 0 posts per page --> Empty array
+        selectedArray = [];
+      } else if (startSliceIndex == endSliceIndex) {
+        // request selecting 1 product
+        selectedArray = selectedArray[startSliceIndex];
+      } else {
+        // If we are requesting a index outside category-array
+        if (selectedArray.length < endSliceIndex) {
+          endSliceIndex = selectedArray.length;
+        }
+        // If we are requesting a index outside category-array
+        if (selectedArray.length < startSliceIndex) {
+          selectedArray = [];
+        } else {
+          selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
+        }
+      }
+    }
 
     /*
     console.log("\nRequest:");
