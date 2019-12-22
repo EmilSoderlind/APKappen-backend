@@ -16,8 +16,8 @@ const productsWithStoreAPIEndpoint = "https://api-extern.systembolaget.se/produc
 let secret = require('./secret');
 
 let APIHeaders = {
-  "Ocp-Apim-Subscription-Key" : secret.Ocp_Apim_Subscription_Key
- };
+  "Ocp-Apim-Subscription-Key": secret.Ocp_Apim_Subscription_Key
+};
 
 let lastParseDate = new Date()
 let startedParseDate = new Date()
@@ -55,16 +55,16 @@ let categoryList = {
   "gifts_sa": new Array(), // Added as extra! - Standard assortment
   "aperitif_and_dessert_sa": new Array(), // Added as extra! - Standard assortment
   "alcohol_free_sa": new Array(), // Added as extra! - Standard assortment
-  "wine_sa": new Array()  // Added as extra! - Standard assortment
+  "wine_sa": new Array() // Added as extra! - Standard assortment
 }
 
-function getEnglishCategoryName(swedishName){
+function getEnglishCategoryName(swedishName) {
 
-  if(swedishName == null){
+  if (swedishName == null) {
     return "undefined";
   }
 
-  switch(swedishName.replaceAll("\"","")) {
+  switch (swedishName.replaceAll("\"", "")) {
     case "Röda viner":
       return "red_wine";
     case "Cider och blanddrycker":
@@ -92,7 +92,7 @@ function getEnglishCategoryName(swedishName){
 }
 
 // Parse downloaded productList to category arrays
-function createCategoryLists(productList){
+function createCategoryLists(productList) {
 
   resetProductArrays()
 
@@ -100,26 +100,26 @@ function createCategoryLists(productList){
 
   for (var i = 0; i < productList.length; i++) {
 
-    let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll("\"","");
+    let currentCategory = JSON.stringify(productList[i]["Category"]).replaceAll("\"", "");
 
-    if(categoryList[currentCategory] === undefined){
+    if (categoryList[currentCategory] === undefined) {
       // If category == null they are weird
       //console.log("Found currentCategory=null!")
-    }else{
+    } else {
       categoryList["all"].push(productList[i])
       categoryList[currentCategory].push(productList[i])
 
-      if(currentCategory == "red_wine" || currentCategory == "sparkling_wine" || currentCategory == "white_wine" || currentCategory == "rose_wine"){
+      if (currentCategory == "red_wine" || currentCategory == "sparkling_wine" || currentCategory == "white_wine" || currentCategory == "rose_wine") {
         allWines.push(productList[i])
 
         // filling viner_sa
-        if(productList[i].Assortment == "FS"){
+        if (productList[i].Assortment == "FS") {
           categoryList["wine_sa"].push(productList[i])
         }
       }
 
       // Standard assortment --> Add to *_sa
-      if(productList[i].Assortment == "FS"){
+      if (productList[i].Assortment == "FS") {
         let standardAssortmentName = currentCategory + "_sa"
         categoryList[standardAssortmentName].push(productList[i])
         categoryList["all_sa"].push(productList[i])
@@ -128,7 +128,7 @@ function createCategoryLists(productList){
     }
   }
 
-  allWines.sort(function(a, b) {
+  allWines.sort(function (a, b) {
     return parseFloat(b.APK) - parseFloat(a.APK);
   });
 
@@ -137,107 +137,111 @@ function createCategoryLists(productList){
 
 
 // TODO to be implemented
-function checkIfURLWorks(product){
+function checkIfURLWorks(product) {
 
   let url = JSON.stringify(product.URL)
-  
-  if(url != undefined){
+
+  if (url != undefined) {
 
     //console.log("the url is " + url.slice(1,url.length-1))
 
-    url = url.replaceAll("\"","");
+    url = url.replaceAll("\"", "");
 
     console.log("url is : " + url)
 
-    request({ url: url}, function (error, response, body) {
+    request({
+      url: url
+    }, function (error, response, body) {
 
       //console.log("product: " + JSON.stringify(product))
 
-      if(response != undefined){
+      if (response != undefined) {
         console.log("response: " + response);
-      }else{
+      } else {
         //console.log("response == undefined")
       }
-      
+
     })
 
-  }else{
+  } else {
     console.log("Product's url is undefined : " + JSON.stringify(product))
     return false;
   }
-  
+
 }
 
 // Create and set .URL attribute in article JSON-objects
 // URL leads to the articles www.systembolaget.se/... page
-function addURLtoProduct(product){
+function addURLtoProduct(product) {
   let baseURL = "https:\//www.systembolaget.se/dryck";
   let categoryURL = "";
   let nameURL = "";
   let numberURL = product.ProductNumber;
 
-  if(product.Category == "undefined"){
+  if (product.Category == "undefined") {
     return;
   }
 
   // Get category-url-text
-  switch(product.Category) {
-  case "red_wine":
-    categoryURL = "roda-viner"
-    break;
-  case "cider_and_mixed_drink":
-    categoryURL = "cider-och-blanddrycker"
-    break;
-  case "white_wine":
-    categoryURL = "vita-viner"
-    break;
-  case "spirits":
-    categoryURL = "sprit";
-    break;
-  case "sparkling_wine":
-    categoryURL = "mousserande-viner";
-    break;
-  case "beer":
-    categoryURL = "ol";
-    break;
-  case "rose_wine":
-    categoryURL = "roseviner";
-    break;
-  case "gifts":
-    categoryURL = "presentartiklar"
-    break;
-  case "aperitif_and_dessert":
-    categoryURL = "aperitif-dessert"
-    break;
-  case "alcohol_free":
-    categoryURL = "alkoholfritt"
-    break;
-  default:
-    console.log("Creating URLs")
-    console.log("Found new category: " + product.Category)
-}
+  switch (product.Category) {
+    case "red_wine":
+      categoryURL = "roda-viner"
+      break;
+    case "cider_and_mixed_drink":
+      categoryURL = "cider-och-blanddrycker"
+      break;
+    case "white_wine":
+      categoryURL = "vita-viner"
+      break;
+    case "spirits":
+      categoryURL = "sprit";
+      break;
+    case "sparkling_wine":
+      categoryURL = "mousserande-viner";
+      break;
+    case "beer":
+      categoryURL = "ol";
+      break;
+    case "rose_wine":
+      categoryURL = "roseviner";
+      break;
+    case "gifts":
+      categoryURL = "presentartiklar"
+      break;
+    case "aperitif_and_dessert":
+      categoryURL = "aperitif-dessert"
+      break;
+    case "alcohol_free":
+      categoryURL = "alkoholfritt"
+      break;
+    default:
+      console.log("Creating URLs")
+      console.log("Found new category: " + product.Category)
+  }
 
   // Get name-url-text
   nameURL = product.ProductNameBold.toString().toLowerCase();
-  nameURL = nameURL.replaceAll("\'","")
-  nameURL = nameURL.replaceAll(":","")
-  nameURL = nameURL.replaceAll("!","")
-  nameURL = nameURL.replaceAll("*","")
-  nameURL = nameURL.replaceAll("--","-")
+  nameURL = nameURL.replaceAll("\'", "")
+  nameURL = nameURL.replaceAll(":", "")
+  nameURL = nameURL.replaceAll(".", "")
+  nameURL = nameURL.replaceAll("'", "")
+  nameURL = nameURL.replaceAll("!", "")
+  nameURL = nameURL.replaceAll("*", "")
+  nameURL = nameURL.replaceAll("--", "-")
   nameURL = slugify(nameURL);
-  nameURL = nameURL.replaceAll("-and-","-")
+  nameURL = nameURL.replaceAll("-and-", "-")
 
-  let createdURL = baseURL+"/"+categoryURL+"/"+nameURL+"-"+numberURL;
+  let createdURL = baseURL + "/" + categoryURL + "/" + nameURL + "-" + numberURL;
   product.URL = createdURL;
   return createdURL;
 }
 
-function translateSwedishCategories(product){
+function translateSwedishCategories(product) {
   product.Category = getEnglishCategoryName(product.Category);
 }
 
 // Add APK + URL to list of article objects
-function processParsedProducts(productList){
+function processParsedProducts(productList) {
   let count = 0;
 
   // Find max APK to calculate APKScore
@@ -246,7 +250,7 @@ function processParsedProducts(productList){
   for (let i = 0; i < productList.length; i++) {
 
     // Removing products that is "IsCompletelyOutOfStock = true"
-    if(productList[i].IsCompletelyOutOfStock){
+    if (productList[i].IsCompletelyOutOfStock) {
       //productList.splice(i,1);
       //console.log("Removed a IsCompletelyOutOfStock=true")
     }
@@ -261,14 +265,14 @@ function processParsedProducts(productList){
     addAPKtoProduct(productList[i])
 
     // Max APK to calculate APKScore
-    if(productList[i].APK > maxAPKFound){
+    if (productList[i].APK > maxAPKFound) {
       maxAPKFound = productList[i].APK
     }
   }
 
   // Setting APKScore
   for (let i = 0; i < productList.length; i++) {
-    productList[i].APKScore = Math.ceil((productList[i].APK/maxAPKFound)*100)
+    productList[i].APKScore = Math.ceil((productList[i].APK / maxAPKFound) * 100)
   }
 }
 
@@ -276,10 +280,10 @@ function addAPKtoProduct(product) {
 
   let price = parseFloat(product.Price);
   let volume = parseFloat(product.Volume);
-  let alcohol = parseFloat(String(product.AlcoholPercentage).replace("%",""));
+  let alcohol = parseFloat(String(product.AlcoholPercentage).replace("%", ""));
   let pant = product.RecycleFee;
 
-  if(Number.isNaN(price) || Number.isNaN(volume) || Number.isNaN(alcohol)){
+  if (Number.isNaN(price) || Number.isNaN(volume) || Number.isNaN(alcohol)) {
     console.error("---------------------")
     console.error("Fatal error in addAPKtoProduct. A value is NaN.")
     console.error("Price: " + price);
@@ -289,28 +293,28 @@ function addAPKtoProduct(product) {
     return -1;
   }
 
-  product.APK = ((alcohol/100)*volume)/price;
+  product.APK = ((alcohol / 100) * volume) / price;
 
-  if(pant == undefined){
+  if (pant == undefined) {
     product.APKWithPant = product.APK
-  }else{
-    product.APKWithPant = ((alcohol/100)*volume)/(price + parseFloat(pant));
+  } else {
+    product.APKWithPant = ((alcohol / 100) * volume) / (price + parseFloat(pant));
   }
 }
 
 function isFloat(n) {
-    return n === +n && n !== (n|0);
+  return n === +n && n !== (n | 0);
 }
 
 function isInteger(n) {
-    return n === +n && n === (n|0);
+  return n === +n && n === (n | 0);
 }
 
-String.prototype.replaceAll = function(str1, str2, ignore){
-    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
+String.prototype.replaceAll = function (str1, str2, ignore) {
+  return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);
 }
 
-function resetProductArrays(){
+function resetProductArrays() {
 
   console.log("Resetting product arrays.")
 
@@ -341,12 +345,12 @@ function resetProductArrays(){
     "gifts_sa": new Array(), // Added as extra! - Standard assortment
     "aperitif_and_dessert_sa": new Array(), // Added as extra! - Standard assortment
     "alcohol_free_sa": new Array(), // Added as extra! - Standard assortment
-    "wine_sa": new Array()  // Added as extra! - Standard assortment
+    "wine_sa": new Array() // Added as extra! - Standard assortment
   }
 }
 
 // Called to update all products
-function reparseSystembolagetAPI(){
+function reparseSystembolagetAPI() {
   console.log("Reparsing Systembolagets API")
 
   parseProducts()
@@ -356,7 +360,7 @@ function reparseSystembolagetAPI(){
 }
 
 // Make call to duckdns.org to update dynamic-IP skruvdragarn.duckdns.org
-function updateDynamicDns(){
+function updateDynamicDns() {
   console.log("Updating dns")
 
   let dnsToken = secret.duckdnsToken;
@@ -365,31 +369,31 @@ function updateDynamicDns(){
 
     if (!error && response.statusCode == 200 && body == "OK") {
       console.log("Updating dns - DONE")
-    }else{
+    } else {
       console.log("Could not update DNS. ERROR: \n" + response.statusCode + "-" + error)
     }
 
-});
+  });
 }
 
 // Return sub-array of search result
-function searchProductArray(arrayToSearch,searchString){
+function searchProductArray(arrayToSearch, searchString) {
   var searchResult = [];
 
-  if(searchString == "" || searchString == undefined || searchString == null){
+  if (searchString == "" || searchString == undefined || searchString == null) {
     return searchResult;
   }
 
   // Searching ProductNameBold + ProductNameThin for 'searchString' --> Appending to resultList
   for (let i = 0; i < arrayToSearch.length; i++) {
-      if(((arrayToSearch[i].ProductNameBold).toLowerCase()).includes(searchString.toLowerCase())){
-        searchResult.push(arrayToSearch[i])
-      }else if(arrayToSearch[i].ProductNameThin != null && (((arrayToSearch[i].ProductNameThin).toLowerCase()).includes(searchString.toLowerCase()))){
-        searchResult.push(arrayToSearch[i])
-      }
+    if (((arrayToSearch[i].ProductNameBold).toLowerCase()).includes(searchString.toLowerCase())) {
+      searchResult.push(arrayToSearch[i])
+    } else if (arrayToSearch[i].ProductNameThin != null && (((arrayToSearch[i].ProductNameThin).toLowerCase()).includes(searchString.toLowerCase()))) {
+      searchResult.push(arrayToSearch[i])
+    }
   }
 
-  searchResult = searchResult.sort(function(a, b) {
+  searchResult = searchResult.sort(function (a, b) {
     return parseFloat(b.APK) - parseFloat(a.APK);
   });
 
@@ -397,47 +401,53 @@ function searchProductArray(arrayToSearch,searchString){
 }
 
 // Returns n nearest Systembolaget stores given long/lat
-function getNearestStores(numberOfStores, lat, long){
+function getNearestStores(numberOfStores, lat, long) {
 
   let nearbyStores = []
 
   for (var key in storesSlim) {
     // check if the property/key is defined in the object itself, not in parent
-    if (stores.hasOwnProperty(key)) {           
+    if (stores.hasOwnProperty(key)) {
 
-      if(storesSlim[key].Address != null){
+      if (storesSlim[key].Address != null) {
 
         let tempStore = storesSlim[key]
 
         nearbyStores.push(tempStore)
-      } 
+      }
     }
   }
-  
-  if(!isNaN(lat) || !isNaN(long)){
-    nearbyStores = nearbyStores.sort(function(a, b) {
-      let distanceToStoreA = geolib.getDistance(
-        { latitude: a.Position.Lat, longitude: a.Position.Long },
-        { latitude: lat, longitude: long },1
-      );
-      let distanceToStoreB = geolib.getDistance(
-        { latitude: b.Position.Lat, longitude: b.Position.Long },
-        { latitude: lat, longitude: long },1
-      );
-  
+
+  if (!isNaN(lat) || !isNaN(long)) {
+    nearbyStores = nearbyStores.sort(function (a, b) {
+      let distanceToStoreA = geolib.getDistance({
+        latitude: a.Position.Lat,
+        longitude: a.Position.Long
+      }, {
+        latitude: lat,
+        longitude: long
+      }, 1);
+      let distanceToStoreB = geolib.getDistance({
+        latitude: b.Position.Lat,
+        longitude: b.Position.Long
+      }, {
+        latitude: lat,
+        longitude: long
+      }, 1);
+
       return distanceToStoreA - distanceToStoreB;
     });
   }
 
   // Return first numberOfStores stores if provided
-  if(isInteger(numberOfStores)){
-    nearbyStores = nearbyStores.slice(0,numberOfStores)
+  if (isInteger(numberOfStores)) {
+    nearbyStores = nearbyStores.slice(0, numberOfStores)
   }
 
   return nearbyStores
 }
 
-function parseStores(){
+function parseStores() {
   console.log("parseStores()")
 
   // Reseting parsed stores before new parse
@@ -449,45 +459,51 @@ function parseStores(){
   console.log("Parsing stores from API")
 
   // Get stores
-  request({ url: storesAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
+  request({
+    url: storesAPIEndpoint,
+    headers: APIHeaders
+  }, function (error, response, body) {
 
     if (!error && response.statusCode == 200) {
 
       parsedStores = JSON.parse(body)
 
       // Get products in stores
-      request({ url: productsWithStoreAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
+      request({
+        url: productsWithStoreAPIEndpoint,
+        headers: APIHeaders
+      }, function (error, response, body) {
 
         if (!error && response.statusCode == 200) {
-    
+
           productsWithStore = JSON.parse(body)
 
           // For each store - currentSiteId
-          for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
+          for (let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++) {
 
             let currentSiteId = parsedStores[storeIndex].SiteId;
 
             // For each productInStore (List with products in every store (with id)) - currentProductsWithStoreSiteId
-            for(let productsWithStoreIndex = 0; productsWithStoreIndex < productsWithStore.length; productsWithStoreIndex++){
+            for (let productsWithStoreIndex = 0; productsWithStoreIndex < productsWithStore.length; productsWithStoreIndex++) {
               let currentProductWithStore = productsWithStore[productsWithStoreIndex];
 
-              if(currentProductWithStore['SiteId'] == currentSiteId){
+              if (currentProductWithStore['SiteId'] == currentSiteId) {
                 parsedStores[storeIndex]['ProductsIdList'] = currentProductWithStore.Products;
                 break;
-              } 
+              }
             }
           }
 
           // For each store
-          for(let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++){
+          for (let storeIndex = 0; storeIndex < parsedStores.length; storeIndex++) {
 
             let currentStore = parsedStores[storeIndex]
             let currentStoreSiteId = currentStore.SiteId;
-            
+
             //console.log("Mapping products for store " + currentStoreSiteId)
 
             // Filtering out non-stores
-            if(currentStore.IsStore){
+            if (currentStore.IsStore) {
 
               // Used when returning stores. To minimize the JSON-size we remove some shit-attributes in that case
               storesSlim[currentStoreSiteId] = JSON.parse(JSON.stringify(parsedStores[storeIndex]));
@@ -504,17 +520,17 @@ function parseStores(){
               stores[currentStoreSiteId].Products = [];
 
               // For each productId in store
-              for(let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++){
-                
+              for (let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++) {
+
                 let currentProductInStoreProductId = parsedStores[storeIndex]['ProductsIdList'][productsInStoreIndex].ProductId;
 
                 // For each parsed product in full assorment
                 // Searching for product with productId - Adding to store
-                for(let parsedProductsIndex = 0; parsedProductsIndex < categoryList.all.length; parsedProductsIndex++){
+                for (let parsedProductsIndex = 0; parsedProductsIndex < categoryList.all.length; parsedProductsIndex++) {
 
                   let currentParsedProduct = categoryList.all[parsedProductsIndex];
 
-                  if(currentParsedProduct.ProductId == currentProductInStoreProductId){
+                  if (currentParsedProduct.ProductId == currentProductInStoreProductId) {
                     stores[currentStoreSiteId].Products.push(currentParsedProduct)
                     break;
                   }
@@ -522,41 +538,45 @@ function parseStores(){
               }
 
               // Sorting
-              stores[currentStoreSiteId].Products.sort(function(a, b) {
+              stores[currentStoreSiteId].Products.sort(function (a, b) {
                 return parseFloat(b.APK) - parseFloat(a.APK);
               });
             }
-            
+
             // Removing stores with long/lat = 0
             removeStoresWithoutGPS(currentStore, currentStoreSiteId);
-          } 
-          
+          }
+
           storesParsed = true;
           console.log("parseStores() - DONE")
-          console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
-          
-        }else{
+          console.log("Parse time: " + (new Date() - beforeStoreParse) / 1000 + " s")
+
+
+          console.log("Parsed products, now searching for broken URLs in categoryList")
+          searchForBrokenProductLinks()
+
+        } else {
           console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
           console.log(response.body)
 
-          if(response.statusCode == 429){
-            
+          if (response.statusCode == 429) {
+
             console.log("Taking a chill-pill and calling parseStores() in 60 sec")
-            setTimeout(parseStores,60000)
+            setTimeout(parseStores, 60000)
 
           }
 
         }
       })
 
-    }else{
-      console.log("Error in parsing stores:" + response.statusCode + "-" + error)   
+    } else {
+      console.log("Error in parsing stores:" + response.statusCode + "-" + error)
       console.log(response.body)
 
-      if(response.statusCode == 429){
-            
+      if (response.statusCode == 429) {
+
         console.log("Taking a chill-pill and calling parseStores() in 60 sec")
-        setTimeout(parseStores,60000)
+        setTimeout(parseStores, 60000)
 
       }
 
@@ -567,30 +587,31 @@ function parseStores(){
 function removeStoresWithoutGPS(currentStore, currentStoreSiteId) {
   if (currentStore.Position != undefined) {
     if (currentStore.Position.Long == 0 || currentStore.Position.Lat == 0) {
-      console.log("Store ("+currentStoreSiteId+") missing GPS position - Deleted.: " + currentStore.Address + " " + currentStore.County);
+      console.log("Store (" + currentStoreSiteId + ") missing GPS position - Deleted.: " + currentStore.Address + " " + currentStore.County);
       delete stores[currentStoreSiteId];
     }
   }
 }
 
-function testCategoryForBrokenURLS(productList){
+function testCategoryForBrokenURLS(productList) {
 
 
 
 }
 
-function removeBrokenProductInCategoryList(ProductIdToRemove){
+function removeBrokenProductInCategoryList(ProductIdToRemove) {
   console.log("removeBrokenProductInCategoryList() " + ProductIdToRemove)
 
 
-  for(let category in categoryList){
-    for(let productIndex in categoryList[category]){
+  for (let category in categoryList) {
+    for (let productIndex in categoryList[category]) {
 
       let currentProduct = categoryList[category][productIndex];
-    
-      if(currentProduct.ProductId == ProductIdToRemove){
+
+      if (currentProduct.ProductId == ProductIdToRemove) {
+        console.log("Current url: " + currentProduct.URL)
         delete categoryList[category][productIndex];
-        console.log("Deleted " + ProductIdToRemove + " from " + category)
+        //console.log("Deleted " + ProductIdToRemove + " from " + category)
       }
     }
   }
@@ -598,11 +619,11 @@ function removeBrokenProductInCategoryList(ProductIdToRemove){
 
 let productsChecked = 0;
 
-let maxNumberOfConnections = 40; // With 70 it broke
+let maxNumberOfConnections = 20; // With 70 it broke
 let numberOfConnections = 0;
 
 let categoriesToParse = []
-let categoryIndex = 21;
+let categoryIndex = 19;
 
 let currentProductToCheckInCategoryIndex = 0;
 
@@ -612,129 +633,139 @@ let tryAgainProducts = [];
 let toBeRemovedProducts = [];
 let doneWithTryAgainProducts = false;
 
-function mainCool(){
+function mainCool() {
 
-  if(doneWithTryAgainProducts == true){
+  if (doneWithTryAgainProducts == true) {
+    console.log("doneWithTryAgainProducts - Nothing more to to here. returning.")
+
     return;
-  }
 
-  if(numberOfConnections <= maxNumberOfConnections){ // Test a new URL
-    //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
+  } else {
 
-    let currentProduct;    
+    if (numberOfConnections <= maxNumberOfConnections) { // Test a new URL
+      //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
 
-    if(doingTryAgainProducts){
-      currentProduct = tryAgainProducts[currentProductToCheckInCategoryIndex]
-    }else{
-      currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
-    }
+      let currentProduct;
 
-    if(currentProduct == undefined){ // odd special case
+      if (doingTryAgainProducts) {
+        currentProduct = tryAgainProducts.pop()
+        currentProductToCheckInCategoryIndex--;
+      } else {
+        currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
+      }
 
-      return;
+      if (currentProduct == undefined) { // odd special case
 
-    }
+        console.log("currentProduct == undefined -> return;")
+        return;
 
-    let currentProductURL = currentProduct.URL;
+      }
 
-    //console.log("currentProductURL: " + currentProductURL)
+      let currentProductURL = currentProduct.URL;
+
+      //console.log("currentProductURL: " + currentProductURL)
       numberOfConnections++;
-    request({ url: currentProductURL}, function (error, response, body) {
-      
-      numberOfConnections--;
+      request({
+        url: currentProductURL
+      }, function (error, response, body) {
 
-      
-      console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked/totalURLsToCheck)*100)).toFixed(2) + " %")
-      
-      // Switch category (Reached last index of category)
-      if(!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length){
+        numberOfConnections--;
 
-        console.log("Done with " + categoriesToParse[categoryIndex])
-        categoryIndex++;
-        currentProductToCheckInCategoryIndex = 0;
-
-        if(categoryIndex == categoriesToParse.length){ 
-          console.log("DONE with ALL categories!")
-          doingTryAgainProducts = true;
+        if (!doneWithTryAgainProducts) {
+          console.log(categoriesToParse[categoryIndex] + "(" + currentProductToCheckInCategoryIndex + ")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked / totalURLsToCheck) * 100)).toFixed(2) + " %")
         }
 
-      }else if(doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length){ // Reached end of tryAgainProducts
-        console.log("Done with tryAgainProducts.")
+        // Switch category (Reached last index of category)
+        if (!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length) {
 
-        console.log("Products with broken URL: " + toBeRemovedProducts.length)
+          console.log("Done with " + categoriesToParse[categoryIndex])
+          categoryIndex++;
+          currentProductToCheckInCategoryIndex = 0;
 
-        if(doneWithTryAgainProducts == false){
-          doneWithTryAgainProducts = true;
+          if (categoryIndex == categoriesToParse.length) {
+            console.log("DONE with ALL categories!")
+            doingTryAgainProducts = true;
 
-          for(let toBeRemoveID in toBeRemovedProducts){
-            removeBrokenProductInCategoryList(toBeRemovedProducts[toBeRemoveID].ProductId)
+            if (tryAgainProducts.length == 0) {
+              doneWithTryAgainProducts = true;
+            }
+
           }
 
+        } else if (doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length) { // Reached end of tryAgainProducts
 
-          return;
+          if (doneWithTryAgainProducts == false) {
 
-        }else{
-          return;
+            doneWithTryAgainProducts = true;
+            console.log("Doing remove work!")
+
+            for (let toBeRemoveID in toBeRemovedProducts) {
+              removeBrokenProductInCategoryList(toBeRemovedProducts.pop().ProductId)
+            }
+
+
+            return;
+
+          } else {
+            console.log("-")
+            return;
+          }
+
         }
 
-      }
+        currentProductToCheckInCategoryIndex++;
+        productsChecked++;
 
-      currentProductToCheckInCategoryIndex++;
-      productsChecked++;
+        if (!error && response.statusCode == 404) { // Invalid URL
+          toBeRemovedProducts.push(currentProduct);
+        } else if (!error && response.statusCode == 200) { // Correct URL
 
-      if(!error && response.statusCode == 404){ // Invalid URL
-        toBeRemovedProducts.push(currentProduct);
-      }else if(!error && response.statusCode == 200){ // Correct URL
+        } else { // non - 200/404 error when requesting URL
 
-      }else{ // non - 200/404 error when requesting URL
+          console.log("Error on " + currentProduct.URL)
+          if (response != undefined) {
+            console.log("code: " + response.statusCode)
+          } else {
+            console.log("response == undefined !")
+          }
+          // TODO check for 500s and incorrect URLS by us
+          tryAgainProducts.push(currentProduct)
 
-        console.log("Error on " + currentProduct.URL)
-        if(response != undefined){
-          console.log("code: " + response.statusCode)
-        }else{
-          console.log("response == undefined !")
         }
 
-        //console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
-        //console.log(response.body)
-        console.log("Got error! " + error)
-        //console.log("resp: " + JSON.stringify(response))
+        mainCool()
 
-        //console.log("Waiting 2000 ms -> Doing retry round")
-        
-        tryAgainProducts.push(currentProduct)
+      })
 
-      }
-
-      mainCool()
-
-    })
-
+    }
   }
 }
 
+
+
 let totalURLsToCheck = 0;
 
-function setUpURLCheck(){
+function setUpURLCheck() {
 
-  for(let category in categoryList){
+  for (let category in categoryList) {
 
-    if(categoryList[category].length != 0){ // Ignore empty categories
+    if (categoryList[category].length != 0) { // Ignore empty categories
       categoriesToParse.push(category);
     }
 
     totalURLsToCheck += categoryList[category].length
 
   }
-  
-  for(let startingConnections = 0; startingConnections < maxNumberOfConnections; startingConnections++){
+
+  for (let startingConnections = 0; startingConnections < maxNumberOfConnections; startingConnections++) {
+    console.log("Starting mainCool process.")
     mainCool()
   }
 
 }
 
 // Checking product list for 404 on URL
-function searchForBrokenProductLinks(){
+function searchForBrokenProductLinks() {
   console.log("searchForBrokenProductLinks")
 
   setUpURLCheck()
@@ -743,20 +774,23 @@ function searchForBrokenProductLinks(){
 }
 
 
-function parseProducts(){
+function parseProducts() {
 
   startedParseDate = new Date()
 
   console.log("parseProducts()")
 
   // Reparsing everyday at 03:00
-  var s = schedule.scheduleJob('0 3 * * *', function(){
+  var s = schedule.scheduleJob('0 3 * * *', function () {
     console.log("03:00 | Reparsing")
     reparseSystembolagetAPI()
     console.log("03:00 | Reparsing - DONE")
   });
 
-  request({ url: productsAPIEndpoint, headers: APIHeaders }, function (error, response, body) {
+  request({
+    url: productsAPIEndpoint,
+    headers: APIHeaders
+  }, function (error, response, body) {
     console.info('Download time: %dms', new Date() - startedParseDate)
 
     if (!error && response.statusCode == 200) {
@@ -766,7 +800,7 @@ function parseProducts(){
       let beforeProcessAndSortDate = new Date()
       processParsedProducts(parsedProducts)
 
-      parsedProducts.sort(function(a, b) {
+      parsedProducts.sort(function (a, b) {
         return parseFloat(b.APK) - parseFloat(a.APK);
       });
 
@@ -774,27 +808,24 @@ function parseProducts(){
       console.log("Antal produkter: " + Object.keys(parsedProducts).length)
 
       createCategoryLists(parsedProducts);
-      
-      
+
+
       parseStores()
 
       //removeBrokenProductInCategoryList(507795)
 
-      console.log("Parsed products, now searching for broken URLs in categoryList")    
-      searchForBrokenProductLinks()
-
       lastParseDate = new Date()
 
       console.log("parseProducts() - DONE")
-    }else{
+    } else {
 
       console.log("ERROR in parsing products: \n" + response.statusCode + "-" + error)
       console.log(response.body)
 
-      if(response.statusCode == 429){
-            
+      if (response.statusCode == 429) {
+
         console.log("Taking a chill-pill and calling parseProducts() in 60 sec")
-        setTimeout(parseProducts,60000)
+        setTimeout(parseProducts, 60000)
 
       }
 
@@ -803,50 +834,56 @@ function parseProducts(){
 }
 
 
-function getProductsNeatly(req, res){
+function getProductsNeatly(req, res) {
 
-  if(categoryList.all == undefined){
+  if (categoryList.all == undefined) {
     res.sendStatus(204)
-  }else{
-    
-    let { store, category, search, postsPerPage, pageIndex } = getQueryParameters(req);
-    
+  } else {
+
+    let {
+      store,
+      category,
+      search,
+      postsPerPage,
+      pageIndex
+    } = getQueryParameters(req);
+
     let selectedArray; // Array to be returned
 
     let validStore = false;
 
     // Store-query is provided 
-    if(store != undefined){
+    if (store != undefined) {
 
       // Check if correct store-siteId
-      if(stores[store] == undefined){
-        
+      if (stores[store] == undefined) {
+
         // Invalid store --> return []
-        validStore = false;        
+        validStore = false;
         res.json([]);
         return;
 
-      }else{
+      } else {
         validStore = true;
         selectedArray = stores[store].Products
       }
     }
 
     // Selecting category
-    if(category != undefined){
+    if (category != undefined) {
 
       // Certain category in _certain store_
-      if(validStore){
+      if (validStore) {
 
         // Getting the stores products
-        selectedArray = getCategoryFromStore(selectedArray, store, category);  
+        selectedArray = getCategoryFromStore(selectedArray, store, category);
 
-      }else{ // No store selected
+      } else { // No store selected
 
         selectedArray = categoryList[category.toLowerCase()]
 
         // If category is invalid -> Return empty array
-        if(selectedArray == undefined){
+        if (selectedArray == undefined) {
           res.json([]);
           return;
         }
@@ -866,7 +903,7 @@ function getProductsNeatly(req, res){
     console.log("Pagination: from index " + startSliceIndex + " to " + endSliceIndex)
     console.log("Search: " + search)
     */
-    
+
     res.json(selectedArray)
     return;
   }
@@ -878,7 +915,13 @@ function getQueryParameters(req) {
   let postsPerPage = Number(req.query.postsPerPage);
   let pageIndex = Number(req.query.pageIndex);
   let search = req.query.search;
-  return { store, category, search, postsPerPage, pageIndex };
+  return {
+    store,
+    category,
+    search,
+    postsPerPage,
+    pageIndex
+  };
 }
 
 // filtering stores products by category
@@ -893,16 +936,14 @@ function getCategoryFromStore(selectedArray, store, category) {
     if (currentProductsCategory == category) {
       // Perfect match enteret-category and products
       selectedArray.push(stores[store].Products[productIndex]);
-    }
-    else if (category == 'wine') {
+    } else if (category == 'wine') {
       // Wine contains all 4 wine categories
       if (currentProductsCategory == 'red_wine' || currentProductsCategory == 'white_wine' ||
         currentProductsCategory == 'sparkling_wine' || currentProductsCategory == 'rose_wine') {
         selectedArray.push(stores[store].Products[productIndex]);
       }
       // category "all" returns everything in store
-    }
-    else if (category == "all") {
+    } else if (category == "all") {
       selectedArray.push(stores[store].Products[productIndex]);
     }
   }
@@ -923,12 +964,10 @@ function paginateSelectedArray(postsPerPage, pageIndex, selectedArray) {
     if (postsPerPage == 0) {
       // Requesting 0 posts per page --> Empty array
       selectedArray = [];
-    }
-    else if (startSliceIndex == endSliceIndex) {
+    } else if (startSliceIndex == endSliceIndex) {
       // request selecting 1 product
       selectedArray = selectedArray[startSliceIndex];
-    }
-    else {
+    } else {
       // If we are requesting a index outside category-array
       if (selectedArray.length < endSliceIndex) {
         endSliceIndex = selectedArray.length;
@@ -936,8 +975,7 @@ function paginateSelectedArray(postsPerPage, pageIndex, selectedArray) {
       // If we are requesting a index outside category-array
       if (selectedArray.length < startSliceIndex) {
         selectedArray = [];
-      }
-      else {
+      } else {
         selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
       }
     }
@@ -945,8 +983,8 @@ function paginateSelectedArray(postsPerPage, pageIndex, selectedArray) {
   return selectedArray;
 }
 
-function openEndPoints(){
-  
+function openEndPoints() {
+
   app.get('/lastParse', (req, res) => {
     res.send(lastParseDate);
   })
@@ -991,7 +1029,7 @@ function openEndPoints(){
 
   // Endpoint for products
   app.get('/APKappen_v2/products', (req, res) => {
-    getProductsNeatly(req,res)
+    getProductsNeatly(req, res)
   })
 
   // Endpoint for stores
@@ -1001,7 +1039,7 @@ function openEndPoints(){
     let lat = Number(req.query.lat)
     let long = Number(req.query.long)
 
-    res.json(getNearestStores(numberOfStores,lat,long))
+    res.json(getNearestStores(numberOfStores, lat, long))
   })
 
   app.listen(port, () => console.log(`Listening on port ${port}!\n`))
@@ -1010,54 +1048,56 @@ function openEndPoints(){
   provideStatusMonitor()
 }
 
-function provideStatusMonitor(){
-  let statusMonitor = require('express-status-monitor')({title: "APKappen API monitor",
-  healthChecks: [{
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/products?category=beer_sa&postsPerPage=1&pageIndex=10',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/products',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/stores',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/products?store=1443&category=beer&postsPerPage=240&pageIndex=1',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/stores?lat=60.33&long=20&numberOfStores=3',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/APKappen_v2/products?category=wine_sa',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/lastParse',
-    port: '1337'
-  }, {
-    protocol: 'http',
-    host: 'localhost',
-    path: '/',
-    port: '1337'
-  }]});
+function provideStatusMonitor() {
+  let statusMonitor = require('express-status-monitor')({
+    title: "APKappen API monitor",
+    healthChecks: [{
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/products?category=beer_sa&postsPerPage=1&pageIndex=10',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/products',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/stores',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/products?store=1443&category=beer&postsPerPage=240&pageIndex=1',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/stores?lat=60.33&long=20&numberOfStores=3',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/APKappen_v2/products?category=wine_sa',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/lastParse',
+      port: '1337'
+    }, {
+      protocol: 'http',
+      host: 'localhost',
+      path: '/',
+      port: '1337'
+    }]
+  });
 
   app.use(statusMonitor);
 }
 
-function main(){
+function main() {
   openEndPoints()
   reparseSystembolagetAPI()
 }
