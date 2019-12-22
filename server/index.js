@@ -220,7 +220,10 @@ function addURLtoProduct(product){
   // Get name-url-text
   nameURL = product.ProductNameBold.toString().toLowerCase();
   nameURL = nameURL.replaceAll("\'","")
+  nameURL = nameURL.replaceAll(":","")
   nameURL = nameURL.replaceAll("!","")
+  nameURL = nameURL.replaceAll("*","")
+  nameURL = nameURL.replaceAll("--","-")
   nameURL = slugify(nameURL);
   nameURL = nameURL.replaceAll("-and-","-")
 
@@ -435,6 +438,11 @@ function getNearestStores(numberOfStores, lat, long){
 }
 
 function parseStores(){
+  console.log("parseStores()")
+
+  // Reseting parsed stores before new parse
+  stores = [];
+  storesSlim = [];
 
   let beforeStoreParse = new Date();
   storesParsed = false;
@@ -524,18 +532,34 @@ function parseStores(){
           } 
           
           storesParsed = true;
+          console.log("parseStores() - DONE")
           console.log("Parse time: " + (new Date() - beforeStoreParse)/1000 + " s")
           
         }else{
-          console.log("Error in parsing products in stores \n" + response.statusCode + "-" + error)
+          console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
           console.log(response.body)
+
+          if(response.statusCode == 429){
+            
+            console.log("Taking a chill-pill and calling parseStores() in 60 sec")
+            setTimeout(parseStores,60000)
+
+          }
+
         }
       })
 
     }else{
-      console.log("Error in parsing stores: " + error)
-      console.log("ERROR: \n" + response.statusCode + "-" + error)      
+      console.log("Error in parsing stores:" + response.statusCode + "-" + error)   
       console.log(response.body)
+
+      if(response.statusCode == 429){
+            
+        console.log("Taking a chill-pill and calling parseStores() in 60 sec")
+        setTimeout(parseStores,60000)
+
+      }
+
     }
   })
 }
@@ -543,34 +567,165 @@ function parseStores(){
 function removeStoresWithoutGPS(currentStore, currentStoreSiteId) {
   if (currentStore.Position != undefined) {
     if (currentStore.Position.Long == 0 || currentStore.Position.Lat == 0) {
-      console.log("\nStore missing GPS position:");
-      console.log(currentStoreSiteId + " " + currentStore.Address + " " + currentStore.County);
-      console.log("Pos: " + JSON.stringify(currentStore.Position));
+      console.log("Store ("+currentStoreSiteId+") missing GPS position - Deleted.: " + currentStore.Address + " " + currentStore.County);
       delete stores[currentStoreSiteId];
     }
   }
 }
 
-// Checking product list for 404 on URL
-function searchForBrokenProductLinks(productList){
-  console.log("searchForBrokenProductLinks")
-  
-  for (var category in categoryList.keys){
+function testCategoryForBrokenURLS(productList){
 
-    console.log("cat: " + category)
-  
+
+
+}
+
+function removeBrokenProductInCategoryList(ProductIdToRemove){
+  console.log("removeBrokenProductInCategoryList() " + ProductIdToRemove)
+
+
+  for(let category in categoryList){
+    for(let productIndex in categoryList[category]){
+
+      let currentProduct = categoryList[category][productIndex];
+    
+      if(currentProduct.ProductId == ProductIdToRemove){
+        delete categoryList[category][productIndex];
+        console.log("Deleted " + ProductIdToRemove + " from " + category)
+      }
+    }
   }
+}
+
+let productsChecked = 0;
+
+let maxNumberOfConnections = 20; // With 70 it broke
+let numberOfConnections = 0;
+
+let categoriesToParse = []
+let categoryIndex = 0;
+
+let currentProductToCheckInCategoryIndex = 0;
+
+let doingTryAgainProducts = false;
+let tryAgainProducts = [];
+
+let toBeRemovedProducts = [];
+
+
+function mainCool(){
+
+  if(numberOfConnections <= maxNumberOfConnections){ // Test a new URL
+    numberOfConnections++;
+    //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
+
+    let currentProduct;    
+
+    if(doingTryAgainProducts){
+      currentProduct = doingTryAgainProducts[currentProductToCheckInCategoryIndex]
+    }else{
+      currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
+    }
+        
+    let currentProductURL = currentProduct.URL;
+
+    //console.log("currentProductURL: " + currentProductURL)
+
+    request({ url: currentProductURL}, function (error, response, body) {
+      
+      numberOfConnections--;
+
+      currentProductToCheckInCategoryIndex++;
+      productsChecked++;
+      console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked/totalURLsToCheck)*100)).toFixed(2) + " %")
+      
+      // Switch category (Reached last index of category)
+      if(currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length && !doingTryAgainProducts){
+
+        console.log("Done with " + categoriesToParse[categoryIndex])
+        categoryIndex++;
+        currentProductToCheckInCategoryIndex = 0;
+
+        if(categoryIndex == categoriesToParse.length){ 
+          console.log("DONE with ALL categories!")
+          doingTryAgainProducts = true;
+        }
+
+      }else if(doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length){ // Reached end of tryAgainProducts
+        console.log("Done with tryAgainProducts.")
+
+
+
+        return;
+      }
+
+      if(!error && response.statusCode == 404){ // Invalid URL
+        toBeRemovedProducts.push(currentProduct);
+      }else if(!error && response.statusCode == 200){ // Correct URL
+
+      }else{ // non - 200/404 error when requesting URL
+
+        console.log("Error on " + currentProduct.URL)
+        if(response != undefined){
+          console.log("code: " + response.statusCode)
+        }else{
+          console.log("response == undefined !")
+        }
+
+        //console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
+        //console.log(response.body)
+        console.log("Got error! " + error)
+        //console.log("resp: " + JSON.stringify(response))
+
+        //console.log("Waiting 2000 ms -> Doing retry round")
+        
+        tryAgainProducts.push(currentProduct)
+
+      }
+
+      mainCool()
+
+    })
+
+  }else{
+    //console.log("All connections is used. " + categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex + ")")
+    
+    setTimeout(mainCool, 60000)
+
+  }
+}
+
+let totalURLsToCheck = 0;
+
+function setUpURLCheck(){
+
+  for(let category in categoryList){
+    categoriesToParse.push(category);
+
+    totalURLsToCheck += categoryList[category].length
+
+  }
+  
+  for(let startingConnections = 0; startingConnections < maxNumberOfConnections; startingConnections++){
+    mainCool()
+  }
+
+}
+
+// Checking product list for 404 on URL
+function searchForBrokenProductLinks(){
+  console.log("searchForBrokenProductLinks")
+
+  setUpURLCheck()
 
   console.log("searchForBrokenProductLinks - DONE")
 }
-
 
 
 function parseProducts(){
 
   startedParseDate = new Date()
 
-  console.log("Parsing from systembolagets API")
+  console.log("parseProducts()")
 
   // Reparsing everyday at 03:00
   var s = schedule.scheduleJob('0 3 * * *', function(){
@@ -597,16 +752,30 @@ function parseProducts(){
       console.log("Antal produkter: " + Object.keys(parsedProducts).length)
 
       createCategoryLists(parsedProducts);
+      
+      
       parseStores()
 
-      console.log("Parsed products, now searching for broken URLs in categoryList")
+      //removeBrokenProductInCategoryList(507795)
+
+      console.log("Parsed products, now searching for broken URLs in categoryList")    
       searchForBrokenProductLinks()
 
       lastParseDate = new Date()
 
+      console.log("parseProducts() - DONE")
     }else{
+
       console.log("ERROR in parsing products: \n" + response.statusCode + "-" + error)
       console.log(response.body)
+
+      if(response.statusCode == 429){
+            
+        console.log("Taking a chill-pill and calling parseProducts() in 60 sec")
+        setTimeout(parseProducts,60000)
+
+      }
+
     }
   })
 }
