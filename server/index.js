@@ -224,7 +224,7 @@ function addURLtoProduct(product) {
   nameURL = nameURL.replaceAll("\'", "")
   nameURL = nameURL.replaceAll(":", "")
   nameURL = nameURL.replaceAll(".", "")
-  nameURL = nameURL.replaceAll("'", "")
+  nameURL = nameURL.replaceAll("\’", "")
   nameURL = nameURL.replaceAll("!", "")
   nameURL = nameURL.replaceAll("*", "")
   nameURL = nameURL.replaceAll("--", "-")
@@ -609,17 +609,19 @@ function removeBrokenProductInCategoryList(ProductIdToRemove) {
       let currentProduct = categoryList[category][productIndex];
 
       if (currentProduct.ProductId == ProductIdToRemove) {
-        console.log("Current url: " + currentProduct.URL)
+        console.log("Missing product? " + currentProduct.URL)
         delete categoryList[category][productIndex];
         //console.log("Deleted " + ProductIdToRemove + " from " + category)
       }
     }
   }
+
+
 }
 
 let productsChecked = 0;
 
-let maxNumberOfConnections = 20; // With 70 it broke
+let maxNumberOfConnections = 31; // With 70 it broke
 let numberOfConnections = 0;
 
 let categoriesToParse = []
