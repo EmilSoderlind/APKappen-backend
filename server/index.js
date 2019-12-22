@@ -610,9 +610,13 @@ let doingTryAgainProducts = false;
 let tryAgainProducts = [];
 
 let toBeRemovedProducts = [];
-
+let doneWithTryAgainProducts = false;
 
 function mainCool(){
+
+  if(doneWithTryAgainProducts == true){
+    return;
+  }
 
   if(numberOfConnections <= maxNumberOfConnections){ // Test a new URL
     //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
@@ -659,11 +663,20 @@ function mainCool(){
 
         console.log("Products with broken URL: " + toBeRemovedProducts.length)
 
-        for(let toBeRemoveID in toBeRemovedProducts){
-          removeBrokenProductInCategoryList(toBeRemovedProducts[toBeRemoveID])
+        if(doneWithTryAgainProducts == false){
+          doneWithTryAgainProducts = true;
+
+          for(let toBeRemoveID in toBeRemovedProducts){
+            removeBrokenProductInCategoryList(toBeRemovedProducts[toBeRemoveID].ProductId)
+          }
+
+
+          return;
+
+        }else{
+          return;
         }
-        
-        return;
+
       }
 
       currentProductToCheckInCategoryIndex++;
@@ -696,11 +709,6 @@ function mainCool(){
       mainCool()
 
     })
-
-  }else{
-    //console.log("All connections is used. " + categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex + ")")
-    
-    setTimeout(mainCool, 60000)
 
   }
 }
