@@ -598,11 +598,11 @@ function removeBrokenProductInCategoryList(ProductIdToRemove){
 
 let productsChecked = 0;
 
-let maxNumberOfConnections = 20; // With 70 it broke
+let maxNumberOfConnections = 40; // With 70 it broke
 let numberOfConnections = 0;
 
 let categoriesToParse = []
-let categoryIndex = 0;
+let categoryIndex = 21;
 
 let currentProductToCheckInCategoryIndex = 0;
 
@@ -615,31 +615,35 @@ let toBeRemovedProducts = [];
 function mainCool(){
 
   if(numberOfConnections <= maxNumberOfConnections){ // Test a new URL
-    numberOfConnections++;
     //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
 
     let currentProduct;    
 
     if(doingTryAgainProducts){
-      currentProduct = doingTryAgainProducts[currentProductToCheckInCategoryIndex]
+      currentProduct = tryAgainProducts[currentProductToCheckInCategoryIndex]
     }else{
       currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
     }
-        
+
+    if(currentProduct == undefined){ // odd special case
+
+      return;
+
+    }
+
     let currentProductURL = currentProduct.URL;
 
     //console.log("currentProductURL: " + currentProductURL)
-
+      numberOfConnections++;
     request({ url: currentProductURL}, function (error, response, body) {
       
       numberOfConnections--;
 
-      currentProductToCheckInCategoryIndex++;
-      productsChecked++;
+      
       console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked/totalURLsToCheck)*100)).toFixed(2) + " %")
       
       // Switch category (Reached last index of category)
-      if(currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length && !doingTryAgainProducts){
+      if(!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length){
 
         console.log("Done with " + categoriesToParse[categoryIndex])
         categoryIndex++;
@@ -653,10 +657,17 @@ function mainCool(){
       }else if(doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length){ // Reached end of tryAgainProducts
         console.log("Done with tryAgainProducts.")
 
+        console.log("Products with broken URL: " + toBeRemovedProducts.length)
 
-
+        for(let toBeRemoveID in toBeRemovedProducts){
+          removeBrokenProductInCategoryList(toBeRemovedProducts[toBeRemoveID])
+        }
+        
         return;
       }
+
+      currentProductToCheckInCategoryIndex++;
+      productsChecked++;
 
       if(!error && response.statusCode == 404){ // Invalid URL
         toBeRemovedProducts.push(currentProduct);
@@ -699,7 +710,10 @@ let totalURLsToCheck = 0;
 function setUpURLCheck(){
 
   for(let category in categoryList){
-    categoriesToParse.push(category);
+
+    if(categoryList[category].length != 0){ // Ignore empty categories
+      categoriesToParse.push(category);
+    }
 
     totalURLsToCheck += categoryList[category].length
 
