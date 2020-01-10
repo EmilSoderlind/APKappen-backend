@@ -88,13 +88,17 @@ function getEnglishCategoryName(swedishName) {
     default:
       console.log("Found new category: " + swedishName)
   }
-
 }
 
 // Parse downloaded productList to category arrays
 function createCategoryLists(productList) {
+  console.log("createCategoryLists()")
 
   resetProductArrays()
+
+  productList.sort(function (a, b) {
+    return parseFloat(b.APK) - parseFloat(a.APK);
+  });
 
   var allWines = [];
 
@@ -104,7 +108,7 @@ function createCategoryLists(productList) {
 
     if (categoryList[currentCategory] === undefined) {
       // If category == null they are weird
-      //console.log("Found currentCategory=null!")
+      // Vinprovning and other activities --> ignored
     } else {
       categoryList["all"].push(productList[i])
       categoryList[currentCategory].push(productList[i])
@@ -124,7 +128,6 @@ function createCategoryLists(productList) {
         categoryList[standardAssortmentName].push(productList[i])
         categoryList["all_sa"].push(productList[i])
       }
-
     }
   }
 
@@ -133,41 +136,6 @@ function createCategoryLists(productList) {
   });
 
   categoryList["wine"] = allWines;
-}
-
-
-// TODO to be implemented
-function checkIfURLWorks(product) {
-
-  let url = JSON.stringify(product.URL)
-
-  if (url != undefined) {
-
-    //console.log("the url is " + url.slice(1,url.length-1))
-
-    url = url.replaceAll("\"", "");
-
-    console.log("url is : " + url)
-
-    request({
-      url: url
-    }, function (error, response, body) {
-
-      //console.log("product: " + JSON.stringify(product))
-
-      if (response != undefined) {
-        console.log("response: " + response);
-      } else {
-        //console.log("response == undefined")
-      }
-
-    })
-
-  } else {
-    console.log("Product's url is undefined : " + JSON.stringify(product))
-    return false;
-  }
-
 }
 
 // Create and set .URL attribute in article JSON-objects
@@ -226,10 +194,16 @@ function addURLtoProduct(product) {
   nameURL = nameURL.replaceAll(".", "")
   nameURL = nameURL.replaceAll("\’", "")
   nameURL = nameURL.replaceAll("!", "")
+  nameURL = nameURL.replaceAll("œ", "o")
+  nameURL = nameURL.replaceAll("&", "")
+  nameURL = nameURL.replaceAll("\"", "")
+  nameURL = nameURL.replaceAll("Æ", "a")
+  nameURL = nameURL.replaceAll("%", "")
   nameURL = nameURL.replaceAll("*", "")
   nameURL = nameURL.replaceAll("--", "-")
+  nameURL = nameURL.replaceAll(" & ", "-")
   nameURL = slugify(nameURL);
-  nameURL = nameURL.replaceAll("-and-", "-")
+  //nameURL = nameURL.replaceAll("-and-", "-")
 
   let createdURL = baseURL + "/" + categoryURL + "/" + nameURL + "-" + numberURL;
   product.URL = createdURL;
@@ -240,35 +214,34 @@ function translateSwedishCategories(product) {
   product.Category = getEnglishCategoryName(product.Category);
 }
 
+function removeProductsNotInStock(product) {
+  if (product.IsCompletelyOutOfStock) {
+    delete product;
+  }
+}
+
 // Add APK + URL to list of article objects
 function processParsedProducts(productList) {
   let count = 0;
 
+  console.log("productList.length = " + productList.length)
+
   // Find max APK to calculate APKScore
   let maxAPKFound = 0;
 
-  for (let i = 0; i < productList.length; i++) {
+  productList = productList.filter(function (prod) {
+    return !prod.IsCompletelyOutOfStock;
+  });
 
-    // Removing products that is "IsCompletelyOutOfStock = true"
-    if (productList[i].IsCompletelyOutOfStock) {
-      //productList.splice(i,1);
-      //console.log("Removed a IsCompletelyOutOfStock=true")
+  productList.forEach(prod => {
+    translateSwedishCategories(prod)
+    addURLtoProduct(prod)
+    addAPKtoProduct(prod)
+
+    if (prod.APK > maxAPKFound) {
+      maxAPKFound = prod.APK
     }
-
-    translateSwedishCategories(productList[i])
-
-    addURLtoProduct(productList[i])
-
-    // Check if URL works
-    //checkIfURLWorks(productList[i])
-
-    addAPKtoProduct(productList[i])
-
-    // Max APK to calculate APKScore
-    if (productList[i].APK > maxAPKFound) {
-      maxAPKFound = productList[i].APK
-    }
-  }
+  })
 
   // Setting APKScore
   for (let i = 0; i < productList.length; i++) {
@@ -316,7 +289,7 @@ String.prototype.replaceAll = function (str1, str2, ignore) {
 
 function resetProductArrays() {
 
-  console.log("Resetting product arrays.")
+  console.log("resetProductArrays()")
 
   categoryList = {
     "red_wine": new Array(),
@@ -378,6 +351,7 @@ function updateDynamicDns() {
 
 // Return sub-array of search result
 function searchProductArray(arrayToSearch, searchString) {
+
   var searchResult = [];
 
   if (searchString == "" || searchString == undefined || searchString == null) {
@@ -393,7 +367,7 @@ function searchProductArray(arrayToSearch, searchString) {
     }
   }
 
-  searchResult = searchResult.sort(function (a, b) {
+  searchResult.sort(function (a, b) {
     return parseFloat(b.APK) - parseFloat(a.APK);
   });
 
@@ -456,7 +430,6 @@ function parseStores() {
 
   let beforeStoreParse = new Date();
   storesParsed = false;
-  console.log("Parsing stores from API")
 
   // Get stores
   request({
@@ -526,9 +499,9 @@ function parseStores() {
 
                 // For each parsed product in full assorment
                 // Searching for product with productId - Adding to store
-                for (let parsedProductsIndex = 0; parsedProductsIndex < categoryList.all.length; parsedProductsIndex++) {
+                for (let parsedProductsIndex = 0; parsedProductsIndex < categoryList["all"].length; parsedProductsIndex++) {
 
-                  let currentParsedProduct = categoryList.all[parsedProductsIndex];
+                  let currentParsedProduct = categoryList["all"][parsedProductsIndex];
 
                   if (currentParsedProduct.ProductId == currentProductInStoreProductId) {
                     stores[currentStoreSiteId].Products.push(currentParsedProduct)
@@ -551,9 +524,8 @@ function parseStores() {
           console.log("parseStores() - DONE")
           console.log("Parse time: " + (new Date() - beforeStoreParse) / 1000 + " s")
 
-
-          console.log("Parsed products, now searching for broken URLs in categoryList")
-          searchForBrokenProductLinks()
+          //console.log("Parsed products, now searching for broken URLs in categoryList")
+          //searchForBrokenProductLinks()
 
         } else {
           console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
@@ -565,7 +537,6 @@ function parseStores() {
             setTimeout(parseStores, 60000)
 
           }
-
         }
       })
 
@@ -579,7 +550,6 @@ function parseStores() {
         setTimeout(parseStores, 60000)
 
       }
-
     }
   })
 }
@@ -593,187 +563,109 @@ function removeStoresWithoutGPS(currentStore, currentStoreSiteId) {
   }
 }
 
-function testCategoryForBrokenURLS(productList) {
-
-
-
-}
-
 function removeBrokenProductInCategoryList(ProductIdToRemove) {
   console.log("removeBrokenProductInCategoryList() " + ProductIdToRemove)
 
-
   for (let category in categoryList) {
-    for (let productIndex in categoryList[category]) {
 
-      let currentProduct = categoryList[category][productIndex];
+    (categoryList[category]) = (categoryList[category]).filter(function (prod) {
 
-      if (currentProduct.ProductId == ProductIdToRemove) {
-        console.log("Missing product? " + currentProduct.URL)
-        delete categoryList[category][productIndex];
-        //console.log("Deleted " + ProductIdToRemove + " from " + category)
+      if (prod.ProductId == ProductIdToRemove) {
+        console.log("Removed product from " + category)
+        console.log(prod.ProductNameBold + " " + prod.ProductNumberShort + " " + prod.URL)
       }
-    }
+
+      return prod.ProductId != ProductIdToRemove;
+    });
+
+    //console.log("Deleted " + ProductIdToRemove + " from " + category)
   }
-
-
 }
-
-
-// Variables for removing products with broken URLS
-let productsChecked = 0;
 
 let maxNumberOfConnections = 35; // With 70 it broke
 let numberOfConnections = 0;
 
-let categoriesToParse = []
-let categoryIndex = 0;
-
-let currentProductToCheckInCategoryIndex = 0;
+let currentProductIndex = 0;
 
 let doingTryAgainProducts = false;
 let tryAgainProducts = [];
 
-let toBeRemovedProducts = [];
 let doneWithTryAgainProducts = false;
+let brokenURLsRemoved = 0;
 
-function mainCool() {
+function searchAndRemoveBrokenURLProcess() {
+  if (numberOfConnections <= maxNumberOfConnections) { // Test a new URL
+    //console.log(categoriesToParse[categoryIndex] + "("+currentProductIndex+")" + " Making a new connection #" + numberOfConnections)
 
-  if (doneWithTryAgainProducts == true) {
-    console.log("doneWithTryAgainProducts - Nothing more to to here. returning.")
+    let currentProduct;
 
-    return;
+    if (doingTryAgainProducts) {
+      currentProduct = tryAgainProducts.pop()
+      currentProductIndex--;
+    } else {
+      currentProduct = categoryList["all"][currentProductIndex]
+    }
 
-  } else {
+    if (currentProduct != undefined) { // Only do request if currentProduct is defined
 
-    if (numberOfConnections <= maxNumberOfConnections) { // Test a new URL
-      //console.log(categoriesToParse[categoryIndex] + "("+currentProductToCheckInCategoryIndex+")" + " Making a new connection #" + numberOfConnections)
+      let currentProductURL = currentProduct.URL;
 
+      //console.log("currentProductURL: " + currentProductURL)
+      numberOfConnections++;
 
-      let currentProduct;
+      request({
+        url: currentProductURL
+      }, function (error, response, body) {
 
-      if (doingTryAgainProducts) {
-        currentProduct = tryAgainProducts.pop()
-        currentProductToCheckInCategoryIndex--;
-      } else {
-        currentProduct = categoryList[categoriesToParse[categoryIndex]][currentProductToCheckInCategoryIndex]
-      }
+        numberOfConnections--;
 
-      if (currentProduct != undefined) { // Only do request if currentProduct is defined
+        //console.log(currentProductIndex + " | Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((currentProductIndex / categoryList["all"].length) * 100)).toFixed(2) + " %")
 
-        let currentProductURL = currentProduct.URL;
+        // Switch category (Reached last index of category)
+        if (!doingTryAgainProducts && currentProductIndex == categoryList["all"].length) {
 
-        //console.log("currentProductURL: " + currentProductURL)
-        numberOfConnections++;
+          if (currentProductIndex == categoryList["all"].length) {
+            console.log("DONE with ALL categories!")
+            doingTryAgainProducts = true;
 
-        mainCool()
-
-        request({
-          url: currentProductURL
-        }, function (error, response, body) {
-
-          numberOfConnections--;
-
-          if (!doneWithTryAgainProducts) {
-            console.log(categoriesToParse[categoryIndex] + "(" + currentProductToCheckInCategoryIndex + ")" + " Connections #" + numberOfConnections + " tryAgainProducts.length: " + tryAgainProducts.length + " Progress: " + parseFloat(((productsChecked / totalURLsToCheck) * 100)).toFixed(2) + " %")
-          }
-
-          // Switch category (Reached last index of category)
-          if (!doingTryAgainProducts && currentProductToCheckInCategoryIndex == categoryList[categoriesToParse[categoryIndex]].length) {
-
-            console.log("Done with " + categoriesToParse[categoryIndex])
-            mainCool()
-            categoryIndex++;
-            currentProductToCheckInCategoryIndex = 0;
-
-            if (categoryIndex == categoriesToParse.length) {
-              console.log("DONE with ALL categories!")
-              doingTryAgainProducts = true;
-
-              if (tryAgainProducts.length == 0) {
-                doneWithTryAgainProducts = true;
-              }
-
-            }
-
-          } else if (doingTryAgainProducts && currentProductToCheckInCategoryIndex == tryAgainProducts.length) { // Reached end of tryAgainProducts
-
-            if (doneWithTryAgainProducts == false) {
-
+            if (tryAgainProducts.length == 0) {
               doneWithTryAgainProducts = true;
-              console.log("Doing remove work!")
-
-              for (let toBeRemoveID in toBeRemovedProducts) {
-                removeBrokenProductInCategoryList(toBeRemovedProducts.pop().ProductId)
-              }
-
-              return;
-
-            } else {
-              console.log("-")
-              return;
             }
-
           }
+        }
 
-          currentProductToCheckInCategoryIndex++;
-          productsChecked++;
+        currentProductIndex++;
 
-          if (!error && response.statusCode == 404) { // Invalid URL
-            toBeRemovedProducts.push(currentProduct);
-          } else if (!error && response.statusCode == 200) { // Correct URL
+        if (!error && response.statusCode == 404) { // Invalid URL
+          removeBrokenProductInCategoryList(currentProduct.ProductId)
+          brokenURLsRemoved++;
+          console.log("Products removed: " + brokenURLsRemoved + " Progress: " + parseFloat(((currentProductIndex / categoryList["all"].length) * 100)).toFixed(2) + " %")
+          //toBeRemovedProducts.push(currentProduct);
+        } else if (!error && response.statusCode == 200) { // Correct URL!
 
-          } else { // non - 200/404 error when requesting URL
+        } else { // non - 200/404 error when requesting URL
+          tryAgainProducts.push(currentProduct)
+        }
 
-            console.log("Error on " + currentProduct.URL)
-            if (response != undefined) {
-              console.log("code: " + response.statusCode)
-            } else {
-              console.log("response == undefined !")
-            }
-            // TODO check for 500s and incorrect URLS by us
-            tryAgainProducts.push(currentProduct)
+        searchAndRemoveBrokenURLProcess()
 
-          }
-
-          mainCool()
-
-        })
-      }
+      })
+    } else if(numberOfConnections == 0){
+      console.log("Removing broken URLs - DONE")
+      console.info('Time since parse started: %dms', new Date() - startedParseDate)
     }
   }
-}
-
-
-
-let totalURLsToCheck = 0;
-
-function setUpURLCheck() {
-
-  for (let category in categoryList) {
-
-    if (categoryList[category].length != 0) { // Ignore empty categories
-      categoriesToParse.push(category);
-    }
-
-    totalURLsToCheck += categoryList[category].length
-
-  }
-
-  for (let startingConnections = 0; startingConnections < maxNumberOfConnections; startingConnections++) {
-    console.log("Starting mainCool process.")
-    mainCool()
-  }
-
 }
 
 // Checking product list for 404 on URL
 function searchForBrokenProductLinks() {
   console.log("searchForBrokenProductLinks")
 
-  setUpURLCheck()
+  for (let startingConnections = 0; startingConnections < maxNumberOfConnections; startingConnections++) {
+    console.log("Starting searchAndRemoveBrokenURLProcess process.")
+    searchAndRemoveBrokenURLProcess()
+  }
 
-  console.log("searchForBrokenProductLinks - DONE")
 }
 
 
@@ -812,17 +704,11 @@ function parseProducts() {
 
       createCategoryLists(parsedProducts);
 
-
       parseStores()
-
-      //removeBrokenProductInCategoryList(507795)
 
       lastParseDate = new Date()
 
-      console.log("parseProducts() - DONE")
     } else {
-
-
 
       console.log("ERROR in parsing products: " + error)
       console.log("Status code: " + response.statusCode)
@@ -834,7 +720,6 @@ function parseProducts() {
         setTimeout(parseProducts, 60000)
 
       }
-
     }
   })
 }
@@ -842,19 +727,16 @@ function parseProducts() {
 
 function getProductsNeatly(req, res) {
 
-  if (categoryList.all == undefined) {
+  if (categoryList["all"] == undefined) {
     res.sendStatus(204)
   } else {
 
-    let {
-      store,
-      category,
-      search,
-      postsPerPage,
-      pageIndex
-    } = getQueryParameters(req);
-
-    let selectedArray; // Array to be returned
+    let store = (req.query.store)
+    let category = (req.query.category)
+    let postsPerPage = Number(req.query.postsPerPage);
+    let pageIndex = Number(req.query.pageIndex);
+    let search = req.query.search
+    let selectedArray = categoryList["all"];
 
     let validStore = false;
 
@@ -882,9 +764,37 @@ function getProductsNeatly(req, res) {
       if (validStore) {
 
         // Getting the stores products
-        selectedArray = getCategoryFromStore(selectedArray, store, category);
+        selectedArray = [];
 
-      } else { // No store selected
+        if (stores[store].Products == undefined) {
+          console.log("stores[store].Products == undefined !")
+          console.log(stores[store])
+        }
+
+        for (let productIndex = 0; productIndex < stores[store].Products.length; productIndex++) {
+          let currentProductsCategory = stores[store].Products[productIndex].Category
+
+          if (currentProductsCategory == category) {
+            // Perfect match enteret-category and products
+            selectedArray.push(stores[store].Products[productIndex])
+
+          } else if (category == 'wine') {
+
+            // Wine contains all 4 wine categories
+            if (currentProductsCategory == 'red_wine' || currentProductsCategory == 'white_wine' ||
+              currentProductsCategory == 'sparkling_wine' || currentProductsCategory == 'rose_wine') {
+
+              selectedArray.push(stores[store].Products[productIndex])
+
+            }
+            // category "all" returns everything in store
+          } else if (category == "all") {
+            selectedArray.push(stores[store].Products[productIndex])
+          }
+        }
+
+        // _Non special store_
+      } else {
 
         selectedArray = categoryList[category.toLowerCase()]
 
@@ -897,32 +807,16 @@ function getProductsNeatly(req, res) {
     }
 
     // Filter by search-string
-    selectedArray = searchSelectedArray(search, selectedArray);
+    if (search != undefined) {
+      selectedArray = searchProductArray(selectedArray, search.replaceAll("\"", ""));
+    }
+
+    selectedArray.sort(function (a, b) {
+      return parseFloat(b.APK) - parseFloat(a.APK);
+    });
 
     // Pagination
-    //selectedArray = paginateSelectedArray(postsPerPage, pageIndex, selectedArray);
-    if (isInteger(postsPerPage) && isInteger(pageIndex)) {
-      var startSliceIndex = (pageIndex * postsPerPage);
-      var endSliceIndex = (pageIndex * postsPerPage) + (postsPerPage);
-      if (postsPerPage == 0) {
-        // Requesting 0 posts per page --> Empty array
-        selectedArray = [];
-      } else if (startSliceIndex == endSliceIndex) {
-        // request selecting 1 product
-        selectedArray = selectedArray[startSliceIndex];
-      } else {
-        // If we are requesting a index outside category-array
-        if (selectedArray.length < endSliceIndex) {
-          endSliceIndex = selectedArray.length;
-        }
-        // If we are requesting a index outside category-array
-        if (selectedArray.length < startSliceIndex) {
-          selectedArray = [];
-        } else {
-          selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
-        }
-      }
-    }
+    selectedArray = paginateProductArray(postsPerPage, pageIndex, selectedArray);
 
     /*
     console.log("\nRequest:");
@@ -937,23 +831,38 @@ function getProductsNeatly(req, res) {
   }
 }
 
-function getQueryParameters(req) {
-  let store = (req.query.store);
-  let category = (req.query.category);
-  let postsPerPage = Number(req.query.postsPerPage);
-  let pageIndex = Number(req.query.pageIndex);
-  let search = req.query.search;
-  return {
-    store,
-    category,
-    search,
-    postsPerPage,
-    pageIndex
-  };
+
+function paginateProductArray(postsPerPage, pageIndex, selectedArray) {
+  if (isInteger(postsPerPage) && isInteger(pageIndex)) {
+    var startSliceIndex = (pageIndex * postsPerPage);
+    var endSliceIndex = (pageIndex * postsPerPage) + (postsPerPage);
+    if (postsPerPage == 0) {
+      // Requesting 0 posts per page --> Empty array
+      selectedArray = [];
+    }
+    else if (startSliceIndex == endSliceIndex) {
+      // request selecting 1 product
+      selectedArray = selectedArray[startSliceIndex];
+    }
+    else {
+      // If we are requesting a index outside category-array
+      if (selectedArray.length < endSliceIndex) {
+        endSliceIndex = selectedArray.length;
+      }
+      // If we are requesting a index outside category-array
+      if (selectedArray.length < startSliceIndex) {
+        selectedArray = [];
+      }
+      else {
+        selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
+      }
+    }
+  }
+  return selectedArray;
 }
 
 // filtering stores products by category
-function getCategoryFromStore(selectedArray, store, category) {
+function getCategoryFromStore(store, category) {
   selectedArray = [];
   if (stores[store].Products == undefined) {
     console.log("stores[store].Products == undefined !");
