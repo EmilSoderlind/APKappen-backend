@@ -100,7 +100,6 @@ function createCategoryLists(productList) {
     return parseFloat(b.APK) - parseFloat(a.APK);
   });
 
-  var allWines = [];
 
   for (var i = 0; i < productList.length; i++) {
 
@@ -111,10 +110,11 @@ function createCategoryLists(productList) {
       // Vinprovning and other activities --> ignored
     } else {
       categoryList["all"].push(productList[i])
+      
       categoryList[currentCategory].push(productList[i])
 
       if (currentCategory == "red_wine" || currentCategory == "sparkling_wine" || currentCategory == "white_wine" || currentCategory == "rose_wine") {
-        allWines.push(productList[i])
+        categoryList["wine"].push(productList[i])
 
         // filling viner_sa
         if (productList[i].Assortment == "FS") {
@@ -124,18 +124,12 @@ function createCategoryLists(productList) {
 
       // Standard assortment --> Add to *_sa
       if (productList[i].Assortment == "FS") {
-        let standardAssortmentName = currentCategory + "_sa"
-        categoryList[standardAssortmentName].push(productList[i])
+        categoryList[currentCategory + "_sa"].push(productList[i])
         categoryList["all_sa"].push(productList[i])
       }
     }
   }
 
-  allWines.sort(function (a, b) {
-    return parseFloat(b.APK) - parseFloat(a.APK);
-  });
-
-  categoryList["wine"] = allWines;
 }
 
 // Create and set .URL attribute in article JSON-objects
