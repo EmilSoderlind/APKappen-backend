@@ -110,7 +110,7 @@ function createCategoryLists(productList) {
       // Vinprovning and other activities --> ignored
     } else {
       categoryList["all"].push(productList[i])
-      
+
       categoryList[currentCategory].push(productList[i])
 
       if (currentCategory == "red_wine" || currentCategory == "sparkling_wine" || currentCategory == "white_wine" || currentCategory == "rose_wine") {
@@ -454,7 +454,7 @@ function parseStores() {
             for (let productsWithStoreIndex = 0; productsWithStoreIndex < productsWithStore.length; productsWithStoreIndex++) {
               let currentProductWithStore = productsWithStore[productsWithStoreIndex];
 
-              if (currentProductWithStore['SiteId'] == currentSiteId) {
+              if (currentProductWithStore.SiteId == currentSiteId) {
                 parsedStores[storeIndex]['ProductsIdList'] = currentProductWithStore.Products;
                 break;
               }
@@ -486,28 +486,36 @@ function parseStores() {
               stores[currentStoreSiteId] = parsedStores[storeIndex];
               stores[currentStoreSiteId].Products = [];
 
-              // For each productId in store
-              for (let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++) {
 
-                let currentProductInStoreProductId = parsedStores[storeIndex]['ProductsIdList'][productsInStoreIndex].ProductId;
+              // Case when there is no products in store. Hence, ProductsIdList never set. currentProductWithStore.Products above is undefined.
+              if (parsedStores[storeIndex]['ProductsIdList'] != undefined) {
 
-                // For each parsed product in full assorment
-                // Searching for product with productId - Adding to store
-                for (let parsedProductsIndex = 0; parsedProductsIndex < categoryList["all"].length; parsedProductsIndex++) {
+                // For each productId in store
+                for (let productsInStoreIndex = 0; productsInStoreIndex < parsedStores[storeIndex]['ProductsIdList'].length; productsInStoreIndex++) {
 
-                  let currentParsedProduct = categoryList["all"][parsedProductsIndex];
+                  let currentProductInStoreProductId = parsedStores[storeIndex]['ProductsIdList'][productsInStoreIndex].ProductId;
 
-                  if (currentParsedProduct.ProductId == currentProductInStoreProductId) {
-                    stores[currentStoreSiteId].Products.push(currentParsedProduct)
-                    break;
+                  // For each parsed product in full assorment
+                  // Searching for product with productId - Adding to store
+                  for (let parsedProductsIndex = 0; parsedProductsIndex < categoryList["all"].length; parsedProductsIndex++) {
+
+                    let currentParsedProduct = categoryList["all"][parsedProductsIndex];
+
+                    if (currentParsedProduct.ProductId == currentProductInStoreProductId) {
+                      stores[currentStoreSiteId].Products.push(currentParsedProduct)
+                      break;
+                    }
                   }
                 }
-              }
 
-              // Sorting
-              stores[currentStoreSiteId].Products.sort(function (a, b) {
-                return parseFloat(b.APK) - parseFloat(a.APK);
-              });
+                // Sorting
+                stores[currentStoreSiteId].Products.sort(function (a, b) {
+                  return parseFloat(b.APK) - parseFloat(a.APK);
+                });
+
+              } else {
+                console.log("Store (" + currentStoreSiteId + ") is missing products. Ignoring.")
+              }
             }
 
             // Removing stores with long/lat = 0
@@ -644,7 +652,7 @@ function searchAndRemoveBrokenURLProcess() {
         searchAndRemoveBrokenURLProcess()
 
       })
-    } else if(numberOfConnections == 0){
+    } else if (numberOfConnections == 0) {
       console.log("Removing broken URLs - DONE")
       console.info('Time since parse started: %dms', new Date() - startedParseDate)
     }
@@ -833,12 +841,10 @@ function paginateProductArray(postsPerPage, pageIndex, selectedArray) {
     if (postsPerPage == 0) {
       // Requesting 0 posts per page --> Empty array
       selectedArray = [];
-    }
-    else if (startSliceIndex == endSliceIndex) {
+    } else if (startSliceIndex == endSliceIndex) {
       // request selecting 1 product
       selectedArray = selectedArray[startSliceIndex];
-    }
-    else {
+    } else {
       // If we are requesting a index outside category-array
       if (selectedArray.length < endSliceIndex) {
         endSliceIndex = selectedArray.length;
@@ -846,8 +852,7 @@ function paginateProductArray(postsPerPage, pageIndex, selectedArray) {
       // If we are requesting a index outside category-array
       if (selectedArray.length < startSliceIndex) {
         selectedArray = [];
-      }
-      else {
+      } else {
         selectedArray = selectedArray.slice(startSliceIndex, endSliceIndex);
       }
     }
