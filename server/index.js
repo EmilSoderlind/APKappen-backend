@@ -535,8 +535,8 @@ function parseStores() {
 
           if (response.statusCode == 429) {
 
-            console.log("Taking a chill-pill and calling parseStores() in 60 sec")
-            setTimeout(parseStores, 60000)
+            console.log("Taking a chill-pill and calling parseStores() in 61 sec")
+            setTimeout(parseStores, 61000)
 
           }
         }
@@ -548,8 +548,8 @@ function parseStores() {
 
       if (response.statusCode == 429) {
 
-        console.log("Taking a chill-pill and calling parseStores() in 60 sec")
-        setTimeout(parseStores, 60000)
+        console.log("Taking a chill-pill and calling parseStores() in 61 sec")
+        setTimeout(parseStores, 61000)
 
       }
     }
@@ -718,8 +718,8 @@ function parseProducts() {
 
       if (response.statusCode == 429) {
 
-        console.log("Taking a chill-pill and calling parseProducts() in 60 sec")
-        setTimeout(parseProducts, 60000)
+        console.log("Taking a chill-pill and calling parseProducts() in 61 sec")
+        setTimeout(parseProducts, 61000)
 
       }
     }
