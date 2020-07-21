@@ -57,7 +57,7 @@ export default function() {
   var postsPerPage = Math.floor((Math.random() * 100) + 0);
   var pageIndex = Math.floor((Math.random() * 4) + 0);
 
-  var localURL = "http://localhost"
+  var localURL = "http://192.168.1.12"
   var hostedURL = "http://skruvdragarn.duckdns.org"
 
   var queryURL = localURL + ":1337/APKappen_v2/products?category="+randomCategory+"\&postsPerPage="+postsPerPage+"\&pageIndex=" + pageIndex;

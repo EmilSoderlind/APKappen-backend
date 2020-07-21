@@ -486,7 +486,6 @@ function parseStores() {
               stores[currentStoreSiteId] = parsedStores[storeIndex];
               stores[currentStoreSiteId].Products = [];
 
-
               // Case when there is no products in store. Hence, ProductsIdList never set. currentProductWithStore.Products above is undefined.
               if (parsedStores[storeIndex]['ProductsIdList'] != undefined) {
 
@@ -526,17 +525,14 @@ function parseStores() {
           console.log("parseStores() - DONE")
           console.log("Parse time: " + (new Date() - beforeStoreParse) / 1000 + " s")
 
-          //console.log("Parsed products, now searching for broken URLs in categoryList")
-          //searchForBrokenProductLinks()
-
         } else {
           console.log("Error in parsing products in stores:" + response.statusCode + "-" + error)
           console.log(response.body)
 
           if (response.statusCode == 429) {
 
-            console.log("Taking a chill-pill and calling parseStores() in 61 sec")
-            setTimeout(parseStores, 61000)
+            console.log("Taking a chill-pill and calling parseStores() in 120 sec")
+            setTimeout(parseStores, 120000)
 
           }
         }
@@ -548,8 +544,8 @@ function parseStores() {
 
       if (response.statusCode == 429) {
 
-        console.log("Taking a chill-pill and calling parseStores() in 61 sec")
-        setTimeout(parseStores, 61000)
+        console.log("Taking a chill-pill and calling parseStores() in 120 sec")
+        setTimeout(parseStores, 120000)
 
       }
     }
@@ -718,8 +714,8 @@ function parseProducts() {
 
       if (response.statusCode == 429) {
 
-        console.log("Taking a chill-pill and calling parseProducts() in 61 sec")
-        setTimeout(parseProducts, 61000)
+        console.log("Taking a chill-pill and calling parseProducts() in 120 sec")
+        setTimeout(parseProducts, 120000)
 
       }
     }
