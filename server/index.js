@@ -7,7 +7,7 @@ const geolib = require('geolib');
 
 const express = require('express')
 const app = express()
-const port = 1338
+const port = 1337
 
 const productsAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 const storesAPIEndpoint = "https://api-extern.systembolaget.se/site/v1/site";
