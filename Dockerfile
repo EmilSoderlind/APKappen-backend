@@ -15,6 +15,6 @@ RUN npm install
 RUN npm ci --only=production
 
 COPY ./server .
-EXPOSE 1337
+EXPOSE 1338
 
 CMD [ "node", "index.js" ]
