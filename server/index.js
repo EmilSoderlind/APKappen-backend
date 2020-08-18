@@ -7,7 +7,7 @@ const geolib = require('geolib');
 
 const express = require('express')
 const app = express()
-const port = 1337
+const port = 1338
 
 const productsAPIEndpoint = "https://api-extern.systembolaget.se/product/v1/product";
 const storesAPIEndpoint = "https://api-extern.systembolaget.se/site/v1/site";
@@ -987,42 +987,42 @@ function provideStatusMonitor() {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/products?category=beer_sa&postsPerPage=1&pageIndex=10',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/products',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/stores',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/products?store=1443&category=beer&postsPerPage=240&pageIndex=1',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/stores?lat=60.33&long=20&numberOfStores=3',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/APKappen_v2/products?category=wine_sa',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/lastParse',
-      port: '1337'
+      port: 'port'
     }, {
       protocol: 'http',
       host: 'localhost',
       path: '/',
-      port: '1337'
+      port: 'port'
     }]
   });
 
