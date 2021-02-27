@@ -2,7 +2,7 @@
 
 ```console
 foo@bar:~$ git clone https://github.com/EmilSoderlind/APKappen-backend
-foo@bar:~$ cd experiment
+foo@bar:~$ cd APKappen-backend/experiment/
 foo@bar:~$ npm ci
 foo@bar:~$ node sb_api_parser.js
 foo@bar:~$ node api_endpoints.js 
