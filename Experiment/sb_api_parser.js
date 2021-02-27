@@ -1,15 +1,14 @@
-let      = require('request');
 const axios = require('axios')
 const { country_list } = require('./country_list');
-
 let Datastore = require('nedb')
-let db = new Datastore({ filename: 'test_neDB', autoload: true });
 
-db.ensureIndex({ fieldName: 'APK' }, (err) => {
+let DB = new Datastore({ filename: 'test_neDB', autoload: true });
+
+DB.ensureIndex({ fieldName: 'APK' }, (err) => {
     if (err) console.log(err)
 });
 
-db.ensureIndex({ fieldName: 'lastSeen' }, (err) => {
+DB.ensureIndex({ fieldName: 'lastSeen' }, (err) => {
     if (err) console.log(err)
 });
 
@@ -23,25 +22,45 @@ let APIHeaders = {
 
 parsedProductIDs = []
 
+const buildPriceHistoryObj = (price) => {
+    let date = Date.now()
+    return {price, date}
+}
+
 // Recursive function that calls next page in current category. Done when next page in response is -1
 const getProductsFromCategoryRequestPage = async (page, current_category) => {
     try {
         current_url = endpoint + page + "&Country=" + current_category
         const resp = await axios.get(current_url, APIHeaders)
 
-        resp.data.products.forEach(newElement => { 
-            removeUnnecessaryFields(newElement);
+        resp.data.products.forEach(async (newProduct) => { 
+            //removeUnnecessaryFields(newProduct);
             
-            newElement['lastSeen'] = Date.now()
-            newElement['_id'] = newElement.productId
-            parsedProductIDs.push(newElement.productId)
-            
-            add_apk_to(newElement)
+            newProduct['lastSeen'] = Date.now()
+            newProduct['_id'] = newProduct.productId
 
-            db.update({ _id: newElement['_id'] }, newElement, { upsert: true }, function (err, numReplaced, upsert) {
-                if (err) console.log(err)
+            parsedProductIDs.push(newProduct.productId)
+            
+            addApkToProduct(newProduct)
+
+            DB.find({ "_id": newProduct.productId }, function (err, docs) {
+
+                newProduct['priceHistory'] = [buildPriceHistoryObj(newProduct.price)]
+                
+                if (docs.length === 1) {
+                    let priceHistory = docs[0]['priceHistory']
+                    let lastPrice = priceHistory[priceHistory.length - 1].price
+                    
+                    if (lastPrice !== newProduct.price){
+                        newProduct['priceHistory'].push(priceHistory)
+                    }
+                }            
+
+                DB.update({ _id: newProduct['_id'] }, newProduct, { upsert: true }, function (err, numReplaced, upsert) {
+                    if (err) console.log(err)
+                });
             });
-        
+
         });
         
         if(resp.data.metadata.nextPage == -1){ // When there is no more pages in current category
@@ -58,10 +77,13 @@ const getProductsFromCategoryRequestPage = async (page, current_category) => {
     }
 };
 
+var start = new Date().getTime();
+
+
 const startSBParse = () => {
+
     // Since API only can provide max 666 pages with maximum 15 products each. 
-    // We must query based on a filter (category) with maximum 666*15=9990 products
-    
+    // We must query based on a filter (category) with maximum 666*15=9990 < products
     countries_done = 0
     country_list.forEach(full_category_entry => {
         category_name = full_category_entry['value']
@@ -70,12 +92,20 @@ const startSBParse = () => {
             countries_done += 1    
             if(countries_done == country_list.length){
                 console.log("Done with all countries.")
+                doneWithParse()
+
             }
         })
     })
 }
 
-const add_apk_to = (product) => {
+const doneWithParse = () => {
+    var end = new Date().getTime();
+    var time = end - start;
+    console.log('Parse took: ' + time/1000 + ' sec');
+}
+
+const addApkToProduct = (product) => {
 
     let price = product.price
     let volume = product.volume
@@ -92,67 +122,45 @@ const add_apk_to = (product) => {
 
 }
 
-function removeUnnecessaryFields(newElement) {
-    delete newElement['supplierName'];
-    delete newElement['isKosher'];
-    delete newElement['restrictedParcelQuantity'];
-    delete newElement['isOrganic'];
-    delete newElement['isEthical'];
-    delete newElement['ethicalLabel'];
-    delete newElement['isWebLaunch'];
-    delete newElement['productLaunchDate'];
-    delete newElement['originLevel1'];
-    delete newElement['originLevel2'];
-    delete newElement['categoryLevel3'];
-    delete newElement['categoryLevel4'];
-    delete newElement['usage'];
-    delete newElement['taste'];
-    delete newElement['tasteSymbols'];
-    delete newElement['tasteClockGroupBitter'];
-    delete newElement['tasteClockGroupSmokiness'];
-    delete newElement['tasteClockBitter'];
-    delete newElement['tasteClockFruitacid'];
-    delete newElement['tasteClockBody'];
-    delete newElement['tasteClockRoughness'];
-    delete newElement['tasteClockSweetness'];
-    delete newElement['tasteClockSmokiness'];
-    delete newElement['tasteClockCasque'];
-    delete newElement['isManufacturingCountry'];
-    delete newElement['isRegionalRestricted'];
-    delete newElement['isNews'];
-    delete newElement['sugarContent'];
-    delete newElement['seal'];
-    delete newElement['vintage'];
-    delete newElement['grapes'];
-    delete newElement['otherSelections'];
-    delete newElement['tasteClocks'];
-    delete newElement['color'];
+function removeUnnecessaryFields(newProduct) {
+    delete newProduct['supplierName'];
+    delete newProduct['isKosher'];
+    delete newProduct['restrictedParcelQuantity'];
+    delete newProduct['isOrganic'];
+    delete newProduct['isEthical'];
+    delete newProduct['ethicalLabel'];
+    delete newProduct['isWebLaunch'];
+    delete newProduct['productLaunchDate'];
+    delete newProduct['originLevel1'];
+    delete newProduct['originLevel2'];
+    delete newProduct['categoryLevel3'];
+    delete newProduct['categoryLevel4'];
+    delete newProduct['usage'];
+    delete newProduct['taste'];
+    delete newProduct['tasteSymbols'];
+    delete newProduct['tasteClockGroupBitter'];
+    delete newProduct['tasteClockGroupSmokiness'];
+    delete newProduct['tasteClockBitter'];
+    delete newProduct['tasteClockFruitacid'];
+    delete newProduct['tasteClockBody'];
+    delete newProduct['tasteClockRoughness'];
+    delete newProduct['tasteClockSweetness'];
+    delete newProduct['tasteClockSmokiness'];
+    delete newProduct['tasteClockCasque'];
+    delete newProduct['isManufacturingCountry'];
+    delete newProduct['isRegionalRestricted'];
+    delete newProduct['isNews'];
+    delete newProduct['sugarContent'];
+    delete newProduct['seal'];
+    delete newProduct['vintage'];
+    delete newProduct['grapes'];
+    delete newProduct['otherSelections'];
+    delete newProduct['tasteClocks'];
+    delete newProduct['color'];
 }
-
-// function sort_products_on_spk( a, b ) {
-//     return a.APK < b.APK ? 1 : -1
-// }
-
-
-// function basic_verifying_product_dict(product_dict){
-
-//     if(product_dict.length < 1000){
-//         console.log("Less than 1000 products. Weird.")
-//         return false
-//     }
-
-//     if(typeof product_dict[0].APK != 'number'){
-//         console.log("APK value is not a number.")
-//         console.log("product_dict[0]: " + product_dict[0])
-//         return false
-//     }
-
-//     return true
-// }
 
 const main = () => {
     startSBParse()
-
 }
 
 main()
