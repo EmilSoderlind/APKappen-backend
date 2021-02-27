@@ -1,5 +1,6 @@
 let Datastore = require('nedb')
 const express = require('express');
+const category_mapping = require('./category_mapping')['category_mapping']
 
 let db = new Datastore({ filename: 'test_neDB', autoload: true });
 
@@ -12,18 +13,33 @@ app.get('/', (req, res) => {
     let category = (req.query.category) || undefined
     let postsPerPage = Number(req.query.postsPerPage) || 5 // If you send postsPerPage=5 you get 5 hehe
     let pageIndex = Number(req.query.pageIndex) || 0
-    let search = req.query.search || null
+    let searchTerm = req.query.search || ''
+    let searchRegex = new RegExp(searchTerm, 'i');
 
-    let queryObject = {}
+    let oldThreshold = (new Date().getTime() / 1000) - (60 * 60 * 24)*3 // 3 days
+    let baseQuery = { lastSeen: { $gt: oldThreshold }}  
+    
+    if (searchTerm) {
+        baseQuery['$or'] = [
+            {
+                "productNameBold": {
+                    "$regex": searchRegex,
+                },
+            },
+            {
+                "productNameThin": {
+                    "$regex": searchRegex,
+                },
+            }
+        ]
+    }
+    
+    if (category && category_mapping[category] && category_mapping[category][0] === 1) baseQuery['categoryLevel1'] = category_mapping[category][1]
+    if (category && category_mapping[category] && category_mapping[category][0] === 2) baseQuery['categoryLevel2'] = category_mapping[category][1]
 
-    //console.log('category_mapping[category] = ' + JSON.stringify(category_mapping[category]))
-
-    //if (category && category_mapping[category]) queryObject['categoryLevel1'] = category
-    //if (search) queryObject['categoryLevel1'] = category
-
-    db.find(queryObject).sort({ APK: -1 }).skip(pageIndex*postsPerPage).limit(postsPerPage).exec(function (err, docs) {
-        res.send(docs)
-    });
+    db.find(baseQuery).sort({ APK: -1 }).skip(pageIndex * postsPerPage).limit(postsPerPage).exec((err, docs) => {
+        return res.send(docs)
+    })
 })
 
 app.listen(PORT, () => console.log(`Listening on port ${PORT}!\n`))

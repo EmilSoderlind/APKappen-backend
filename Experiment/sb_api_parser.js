@@ -1,7 +1,8 @@
 const axios = require('axios')
 const { country_list } = require('./country_list');
 let Datastore = require('nedb')
-
+let slugify = require('slugify')
+const category_mapping = require('./category_mapping')['category_mapping']
 let DB = new Datastore({ filename: 'test_neDB', autoload: true });
 
 DB.ensureIndex({ fieldName: 'APK' }, (err) => {
@@ -16,9 +17,9 @@ DB.ensureIndex({ fieldName: 'lastSeen' }, (err) => {
 const endpoint = "https://api-extern.systembolaget.se/sb-api-ecommerce/v1/productsearch/search?size=15&page=";
 let APIHeaders = {  
     headers: {
-        "Ocp-Apim-Subscription-Key": "874f1ddde97d43f79d8a1b161a77ad31"
+        "Ocp-Apim-Subscription-Key": "cfc702aed3094c86b92d6d4ff7a54c84"
     }
-}
+}// old: 874f1ddde97d43f79d8a1b161a77ad31
 
 parsedProductIDs = []
 
@@ -38,6 +39,7 @@ const getProductsFromCategoryRequestPage = async (page, current_category) => {
             
             newProduct['lastSeen'] = Date.now()
             newProduct['_id'] = newProduct.productId
+            newProduct['systemBolagetURL'] = buildSBURL(newProduct)
 
             parsedProductIDs.push(newProduct.productId)
             
@@ -158,6 +160,20 @@ function removeUnnecessaryFields(newProduct) {
     delete newProduct['tasteClocks'];
     delete newProduct['color'];
 }
+
+const buildSBURL = (product) => {
+
+    let basePart = "https:\//www.systembolaget.se/produkt"
+    let categoryPart = product.categoryLevel1 || 'vara'
+    let numberPart = product.productNumber
+  
+    let namePart = product.productNameBold.toString().toLowerCase()
+    namePart = namePart.replace(" & ", "-")
+    namePart = slugify(namePart)
+  
+    return createdURL = basePart + "/" + categoryPart + "/" + namePart + "-" + numberPart
+}
+
 
 const main = () => {
     startSBParse()
