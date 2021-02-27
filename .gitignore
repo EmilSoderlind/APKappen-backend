@@ -118,5 +118,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 *test_neDB
-Experiment/test_neDB
+test_neDB
 Experiment/test_neDB
