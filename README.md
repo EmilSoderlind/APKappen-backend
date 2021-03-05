@@ -7,3 +7,19 @@ foo@bar:~$ npm ci
 foo@bar:~$ npm run parse
 foo@bar:~$ npm run start
 ```
+
+# Systembolaget API endpoints
+
+base: https://api-extern.systembolaget.se/sb-api-ecommerce/v1/
+
+## search stores: 
+sitesearch/store?q=<xxx>
+
+ex: sitesearch/store?q=ersboda
+ex: sitesearch/store?q=2
+
+## information about a product in a store:
+ProductId=<xxx>&StoreId=<xxx>
+
+ex: ProductId=24529131&StoreId=2416
+
