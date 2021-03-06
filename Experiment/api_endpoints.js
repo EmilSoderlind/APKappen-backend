@@ -40,7 +40,8 @@ app.get('/products', (req, res) => {
     let postsPerPage = Number(req.query.postsPerPage) || 5 // If you send postsPerPage=5 you get 5 hehe
     let pageIndex = Number(req.query.pageIndex) || 0
     let searchTerm = req.query.search || ''
-
+    let searchRegex = new RegExp(searchTerm, 'i');
+    
     let oldThreshold = (new Date().getTime() / 1000) - (60 * 60 * 24)*3 // 3 days
     let baseQuery = { lastSeen: { $gt: oldThreshold }}  
     
