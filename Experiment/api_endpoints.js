@@ -6,18 +6,12 @@ const category_mapping = require('./category_mapping')['category_mapping']
 const sortByGPSDistance = (referenceGPSLocation) => {
     return (storeObjectA, storeObjectB) => {
         if(verifyGPSLocation(storeObjectA.position) && verifyGPSLocation(storeObjectB.position)){
-            console.log('\nwurks')
-            console.log('storeObjectA.position = ' + JSON.stringify(storeObjectA.position))
-            console.log('storeObjectB.position = ' + JSON.stringify(storeObjectB.position))
-
+            
             const distanceToA = geolib.getDistance(referenceGPSLocation, storeObjectA.position)
             const distanceToB = geolib.getDistance(referenceGPSLocation, storeObjectB.position)
 
             return distanceToA > distanceToB ? 1 : -1
         } else {
-            console.log('\n no wurks')
-            console.log('storeObjectA.position = ' + JSON.stringify(storeObjectA.position))
-            console.log('storeObjectB.position = ' + JSON.stringify(storeObjectB.position))
             return -1
         }
     }
@@ -64,7 +58,7 @@ app.get('/products', (req, res) => {
     if (category && category_mapping[category] && category_mapping[category][0] === 2) baseQuery['categoryLevel2'] = category_mapping[category][1]
 
     product_DB.find(baseQuery).sort({ APK: -1 }).skip(pageIndex * postsPerPage).limit(postsPerPage).exec((err, docs) => {
-        return res.send(docs)
+        return docs ? res.send(docs) : []
     })
 })
 
@@ -72,14 +66,21 @@ app.get('/stores', (req, res) => {
 
     let postsPerPage = Number(req.query.postsPerPage) || Infinity // If you send postsPerPage=5 you get 5 hehe
     let pageIndex = Number(req.query.pageIndex) || 0
-    // let latitude = Number(req.query.latitude) || null
-    // let longitude = Number(req.query.longitude) || null
+    let latitude = Number(req.query.latitude) || null
+    let longitude = Number(req.query.longitude) || null
 
-    store_DB.find({isAgent: false}).skip(pageIndex * postsPerPage).limit(postsPerPage).exec((err, docs) => {
-        
+    store_DB.find({isAgent: false}).exec((err, docs) => {
+
+        let storesToSend = docs
+
+        // .skip(pageIndex * postsPerPage).limit(postsPerPage)
         // let referenceGPSLocation = {latitude: 64.92830833289035, longitude: 17.42345440348815}
-        // return res.send(docs.sort(sortByGPSDistance(referenceGPSLocation)))
-        return res.send(docs)
+        let referenceGPSLocation = {latitude, longitude}
+        if(verifyGPSLocation(referenceGPSLocation)){
+            storesToSend = docs.sort(sortByGPSDistance(referenceGPSLocation))
+        }
+        
+        return res.send(storesToSend)
 
     })
 

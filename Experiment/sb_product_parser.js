@@ -40,6 +40,7 @@ const getProductsFromCategoryRequestPage = async (page, current_category) => {
             newProduct['lastSeen'] = Date.now()
             newProduct['_id'] = newProduct.productId
             newProduct['systemBolagetURL'] = buildSBURL(newProduct)
+            newProduct['inStores'] = []
 
             parsedProductIDs.push(newProduct.productId)
             
