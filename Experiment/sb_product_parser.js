@@ -1,8 +1,10 @@
 const axios = require('axios')
+const pMap = require('p-map');
 const { country_list } = require('./country_list');
 let Datastore = require('nedb')
 let slugify = require('slugify')
-const category_mapping = require('./category_mapping')['category_mapping']
+const category_mapping = require('./category_mapping')['category_mapping'];
+const { connectedClient, getProductWithId, upsertProductToDB } = require('./mongoDB_handler');
 let DB = new Datastore({ filename: 'product_DB', autoload: true });
 
 DB.ensureIndex({ fieldName: 'APK' }, (err) => {
@@ -29,42 +31,39 @@ const buildPriceHistoryObj = (price) => {
 }
 
 // Recursive function that calls next page in current category. Done when next page in response is -1
-const getProductsFromCategoryRequestPage = async (page, current_category) => {
+const getProductsFromCategoryRequestPage = async (page, current_category, DB_client) => {
     try {
         current_url = endpoint + page + "&Country=" + current_category
         const resp = await axios.get(current_url, APIHeaders)
+        
+        await pMap(resp.data.products, (async (newProduct) => {
 
-        resp.data.products.forEach(async (newProduct) => { 
-            //removeUnnecessaryFields(newProduct);
-            
             newProduct['lastSeen'] = Date.now()
             newProduct['_id'] = newProduct.productId
             newProduct['systemBolagetURL'] = buildSBURL(newProduct)
-            newProduct['inStores'] = []
 
             parsedProductIDs.push(newProduct.productId)
             
             addApkToProduct(newProduct)
 
-            DB.find({ "_id": newProduct.productId }, function (err, docs) {
+            const oldProduct = await getProductWithId(DB_client, newProduct.productId)
 
-                newProduct['priceHistory'] = [buildPriceHistoryObj(newProduct.price)]
+            // console.log('oldProduct = ' + JSON.stringify(oldProduct))
+
+            newProduct['priceHistory'] = [buildPriceHistoryObj(newProduct.price)]
+            
+            if (oldProduct.length === 1) {
+                let priceHistory = oldProduct[0]['priceHistory']
+                let lastPrice = priceHistory[priceHistory.length - 1].price
                 
-                if (docs.length === 1) {
-                    let priceHistory = docs[0]['priceHistory']
-                    let lastPrice = priceHistory[priceHistory.length - 1].price
-                    
-                    if (lastPrice !== newProduct.price){
-                        newProduct['priceHistory'].push(priceHistory)
-                    }
-                }            
+                if (lastPrice !== newProduct.price){
+                    newProduct['priceHistory'].push(priceHistory)
+                }
+            }            
 
-                DB.update({ _id: newProduct['_id'] }, newProduct, { upsert: true }, function (err, numReplaced, upsert) {
-                    if (err) console.log(err)
-                });
-            });
-
-        });
+            await upsertProductToDB(DB_client, newProduct)        
+    
+        }), {concurrency: 15})
         
         if(resp.data.metadata.nextPage == -1){ // When there is no more pages in current category
             console.log("Prod count: " + parsedProductIDs.length + " Last parse for category: " + current_category)
@@ -72,7 +71,7 @@ const getProductsFromCategoryRequestPage = async (page, current_category) => {
         }
         
         next_page = page + 1
-        await getProductsFromCategoryRequestPage(next_page, current_category)
+        await getProductsFromCategoryRequestPage(next_page, current_category, DB_client)
 
     } catch (err) {
         // Handle Error Here
@@ -85,21 +84,20 @@ var start = new Date().getTime();
 
 const parse_sb_products = async () => {
 
-    // Since API only can provide max 666 pages with maximum 15 products each. 
-    // We must query based on a filter (category) with maximum 666*15=9990 < products
-    countries_done = 0
-    country_list.forEach(full_category_entry => {
-        category_name = full_category_entry['value']
-            
-        getProductsFromCategoryRequestPage(1, category_name).then(() => {   
+    const DB_client = await connectedClient()
+    let countries_done = 0
+    await pMap(country_list, (async (country) => {
+        country_name = country['value']        
+        await getProductsFromCategoryRequestPage(1, country_name, DB_client).then(async () => {   
             countries_done += 1    
             if(countries_done == country_list.length){
                 console.log("Done with all countries.")
                 doneWithParse()
-
+                await DB_client.close()
             }
         })
-    })
+
+    }), {concurrency: country_list.length})
 }
 
 const doneWithParse = () => {
