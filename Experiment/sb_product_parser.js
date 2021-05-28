@@ -43,41 +43,27 @@ const getProductsFromCategoryRequestPage = async (page, current_category, DB_cli
             newProduct['systemBolagetURL'] = buildSBURL(newProduct)
 
             parsedProductIDs.push(newProduct.productId)
-            
             addApkToProduct(newProduct)
-
             const oldProduct = await getProductWithId(DB_client, newProduct.productId)
-
-            // console.log('oldProduct = ' + JSON.stringify(oldProduct))
-
-            newProduct['priceHistory'] = [buildPriceHistoryObj(newProduct.price)]
             
+            newProduct['priceHistory'] = [buildPriceHistoryObj(newProduct.price)]
             if (oldProduct.length === 1) {
                 let priceHistory = oldProduct[0]['priceHistory']
                 let lastPrice = priceHistory[priceHistory.length - 1].price
-                
-                if (lastPrice !== newProduct.price){
-                    newProduct['priceHistory'].push(priceHistory)
-                }
+                if (lastPrice !== newProduct.price) newProduct['priceHistory'].push(priceHistory)
             }            
 
             await upsertProductToDB(DB_client, newProduct)        
-    
         }), {concurrency: 15})
         
-        if(resp.data.metadata.nextPage == -1){ // When there is no more pages in current category
-            console.log("Prod count: " + parsedProductIDs.length + " Last parse for category: " + current_category)
-            return current_category
-        }
+        if(resp.data.metadata.nextPage == -1) return console.log("Prod count: " + parsedProductIDs.length + " Last page parsed for category: " + current_category)
         
         next_page = page + 1
         await getProductsFromCategoryRequestPage(next_page, current_category, DB_client)
-
     } catch (err) {
-        // Handle Error Here
         console.log("error inside: " + err)
     }
-};
+}
 
 var start = new Date().getTime();
 
@@ -90,7 +76,7 @@ const parse_sb_products = async () => {
         country_name = country['value']        
         await getProductsFromCategoryRequestPage(1, country_name, DB_client).then(async () => {   
             countries_done += 1    
-            if(countries_done == country_list.length){
+            if(countries_done === country_list.length){
                 console.log("Done with all countries.")
                 doneWithParse()
                 await DB_client.close()
@@ -108,19 +94,13 @@ const doneWithParse = () => {
 
 const addApkToProduct = (product) => {
 
-    let price = product.price
-    let volume = product.volume
-    let alcohol = product.alcoholPercentage
-    let pant = product.recycleFee;
+    const price = product.price
+    const volume = product.volume
+    const alcohol = product.alcoholPercentage
+    const pant = product.recycleFee;
   
     product.APK = ((alcohol / 100) * volume) / price;
-  
-    if (pant == undefined) {
-      product.APKWithPant = product.APK
-    } else {
-      product.APKWithPant = ((alcohol / 100) * volume) / (price + parseFloat(pant));
-    }
-
+    product.APKWithPant = pant ? ((alcohol / 100) * volume) / (price + parseFloat(pant)) : product.APK
 }
 
 function removeUnnecessaryFields(newProduct) {
@@ -161,10 +141,9 @@ function removeUnnecessaryFields(newProduct) {
 }
 
 const buildSBURL = (product) => {
-
-    let basePart = "https:\//www.systembolaget.se/produkt"
-    let categoryPart = product.categoryLevel1 || 'vara'
-    let numberPart = product.productNumber
+    const basePart = "https:\//www.systembolaget.se/produkt"
+    const categoryPart = product.categoryLevel1 || 'vara'
+    const numberPart = product.productNumber
   
     let namePart = product.productNameBold.toString().toLowerCase()
     namePart = namePart.replace(" & ", "-")
