@@ -1,0 +1,23 @@
+{
+  "name": "resurrection",
+  "version": "1.0.0",
+  "description": "resurrection of the apk backend",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "express": "^4.17.1",
+    "md5": "^2.3.0",
+    "qs": "^6.10.1",
+    "slugify": "^1.5.3",
+    "sqlite3": "^5.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
