@@ -35,9 +35,9 @@ app.get("/opening-hours", async (req, res, next) => {
 })
 
 app.get("/products", (req, res, next) => {
-	const { page, store, productsPerPage } = qs.parse(req.url.split('?')[1])
-	console.log({ page, store })
-	db.all(queries.getProducts({ page, productsPerPage }), [], async (err, products) => {
+	const { page, store, search, productsPerPage, category } = qs.parse(req.url.split('?')[1])
+	console.log({ page, store, search, category })
+	db.all(queries.getProducts({ page, productsPerPage, category, search }), [], async (err, products) => {
 		if (err) {
 			res.status(400).json({ "error": err.message });
 			return;

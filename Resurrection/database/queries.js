@@ -50,16 +50,21 @@ const ensureOnlyDigits = (param, fallback) => RegExp("^[0-9]*$").test(param) ? p
 
 const getStores = "select * from store"
 const getStock = "select * from stock"
-const getProducts = ({ page, productsPerPage }) => {
+const searchableColumns = ['name', 'subName', 'categoryLevel1', 'categoryLevel2', 'usage', 'taste', 'country', 'producer']
+const categoryColumns = ['categoryLevel1', 'categoryLevel2']
+const getProducts = ({ page, productsPerPage, category, search }) => {
 	productsPerPage = ensureOnlyDigits(productsPerPage, DEFAULT_PRODUCT_PER_PAGE_LIMIT)
 	page = ensureOnlyDigits(page, 1)
 	const from = (productsPerPage * (page - 1))
 	const to = (productsPerPage * (page))
-	return `select * from product order by apk desc limit ${from}, ${to}`
+
+	const categoryFilter = category && `( ${categoryColumns.map((column) => `${column} = "${category}"`).join(' or ') } )`
+	const searchFilter = search && `( ${searchableColumns.map((column) => `${column} like "%${search}%"`).join(' or ')} )`
+	const filter = (categoryFilter || searchFilter) && `where ${[categoryFilter, searchFilter].filter(Boolean).join(' and ')}`
+	return `select * from product ${filter || ''} order by apk desc limit ${from}, ${to}`
 }
 
 const getStockInStore = ({ store, products }) => {
-	store = ensureOnlyDigits(store, '0')
 	const productIds = products.map(product => `"${product.id}"`).join(',')
 	const updateThreshold = new Date() - UPDATE_INTERVAL
 	return `select * from stock where storeId="${store}" and productId in (${productIds}) and updated > ${updateThreshold}`

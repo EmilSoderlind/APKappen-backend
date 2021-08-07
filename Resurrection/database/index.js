@@ -6,7 +6,7 @@ const { insertStore, insertProduct, insertStock, createStores, createProducts, c
 const slugify = require('slugify')
 
 const populateStores = async (db) => {
-	const stores = await getStores()
+	const stores = (await getStores()).filter((store) => !store.isAgent)
 	console.log('POPULATING STORES WITH', stores.length, 'STORES')
 	stores.forEach(store => {
 		db.run(insertStore, [store.siteId, store.streetAddress, store.city, store.displayName, store.position.latitude, store.position.longitude], (error) => error && console.log(error))
