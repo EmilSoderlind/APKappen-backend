@@ -9,7 +9,7 @@
   "author": "Emil Söderlind",
   "license": "ISC",
   "dependencies": {
-    "express": "4.17.1",
+    "express": "4.17.3",
     "express-status-monitor": "^1.2.7",
     "geolib": "^3.0.4",
     "marked": "^0.7.0",
